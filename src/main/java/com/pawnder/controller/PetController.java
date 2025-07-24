@@ -1,0 +1,242 @@
+package com.pawnder.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pawnder.config.SessionUtil;
+import com.pawnder.dto.PetProfileDto;
+import com.pawnder.entity.Pet;
+import com.pawnder.entity.User;
+import com.pawnder.repository.PetRepository;
+import com.pawnder.service.FileService;
+import com.pawnder.service.PetService;
+import com.pawnder.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@Slf4j
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/pet")
+@Tag(name = "Pet", description = "반려견 관련 API")
+public class PetController {
+    private final PetService petService;
+    private final PetRepository petRepository;
+
+    @Operation(summary = "나의 반려견 등록")
+    @PostMapping("/register")
+    public ResponseEntity<Map<String, Object>> enrollPet(
+            @RequestPart("pet") String petJson,
+            @RequestPart("profile") MultipartFile profileImage,
+            HttpServletRequest request) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // 현재 로그인한 사용자 정보 가져오기
+            String userId = getCurrentUserId(request);
+            if (userId == null) {
+                response.put("success", false);
+                response.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            // JSON 파싱
+            ObjectMapper mapper = new ObjectMapper();
+            PetProfileDto petProfileDto = mapper.readValue(petJson, PetProfileDto.class);
+
+            // 반려견 등록
+            petService.enrollPet(userId, petProfileDto, profileImage);
+
+            response.put("success", true);
+            response.put("message", "반려견 등록이 완료되었습니다.");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("반려견 등록 중 오류 발생", e);
+            response.put("success", false);
+            response.put("message", "등록 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @Operation(summary = "나의 반려견 조회")
+    @GetMapping("/profile/pets")
+    public ResponseEntity<?> getUserPets(HttpSession session) {
+        try {
+            // ✅ 올바른 방식: SessionUtil 사용
+            String userId = SessionUtil.getLoginUserId(session);
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+            }
+
+            // 반려견 목록 조회
+            List<PetProfileDto> pets = petService.getPetsByUserId(userId);
+            return ResponseEntity.ok(pets);
+
+        } catch (Exception e) {
+            log.error("반려견 조회 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("반려견 조회 중 오류가 발생했습니다.");
+        }
+    }
+
+    /*@Operation(summary = "반려견 상세 정보 조회")
+    @GetMapping("/{petId}")
+    public ResponseEntity<Map<String, Object>> getPetDetail(@PathVariable Long petId, HttpServletRequest request) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            String userId = getCurrentUserId(request);
+            if (userId == null) {
+                response.put("success", false);
+                response.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            Optional<PetProfileDto> petOptional = petService.getPetsByUserId(userId);
+
+            if (petOptional.isPresent()) {
+                response.put("success", true);
+                response.put("pet", petOptional.get());
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "반려견 정보를 찾을 수 없습니다.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+        } catch (Exception e) {
+            log.error("반려견 상세 정보 조회 중 오류 발생", e);
+            response.put("success", false);
+            response.put("message", "반려견 정보 조회 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }*/
+
+    @GetMapping("/{petId}")
+    public ResponseEntity<PetProfileDto> getPet(@PathVariable String petId) {
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 반려견을 찾을 수 없습니다."));
+        PetProfileDto dto = PetProfileDto.fromEntity(pet);
+        return ResponseEntity.ok(dto);
+    }
+
+    @Operation(summary = "반려견 정보 수정")
+    @PutMapping("/edit/{petId}")
+    public ResponseEntity<Map<String, Object>> updatePet(
+            @PathVariable String petId,
+            @RequestPart("pet") String petJson,
+            @RequestPart(value = "profile", required = false) MultipartFile profileImage,
+            HttpServletRequest request) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            String userId = getCurrentUserId(request);
+            if (userId == null) {
+                response.put("success", false);
+                response.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            PetProfileDto petProfileDto = mapper.readValue(petJson, PetProfileDto.class);
+
+            boolean updated = petService.updatePet(petId, userId, petProfileDto, profileImage);
+
+            if (updated) {
+                response.put("success", true);
+                response.put("message", "반려견 정보가 수정되었습니다.");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "반려견 정보 수정에 실패했습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+        } catch (Exception e) {
+            log.error("반려견 정보 수정 중 오류 발생", e);
+            response.put("success", false);
+            response.put("message", "반려견 정보 수정 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @Operation(summary = "반려견 삭제")
+    @DeleteMapping("/delete/{petId}")
+    public ResponseEntity<Map<String, Object>> deletePet(@PathVariable String petId, HttpServletRequest request) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            String userId = getCurrentUserId(request);
+            if (userId == null) {
+                response.put("success", false);
+                response.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            boolean deleted = petService.deletePet(petId, userId);
+
+            if (deleted) {
+                response.put("success", true);
+                response.put("message", "반려견 정보가 삭제되었습니다.");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "반려견 정보 삭제에 실패했습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+        } catch (Exception e) {
+            log.error("반려견 정보 삭제 중 오류 발생", e);
+            response.put("success", false);
+            response.put("message", "반려견 정보 삭제 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    /**
+     * 현재 로그인한 사용자의 userId를 가져오는 헬퍼 메서드
+     */
+    private String getCurrentUserId(HttpServletRequest request) {
+        try {
+            // 1. 세션에서 먼저 확인
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                User sessionUser = SessionUtil.getLoginUser(session);
+                if (sessionUser != null) {
+                    return sessionUser.getUserId();
+                }
+
+                // 또는 String으로 저장된 userId 확인
+                String userId = SessionUtil.getLoginUserId(session);
+                if (userId != null) {
+                    return userId;
+                }
+            }
+
+            // 2. Spring Security에서 확인
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+                return auth.getName();
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.error("사용자 ID 조회 중 오류 발생", e);
+            return null;
+        }
+    }
+}
