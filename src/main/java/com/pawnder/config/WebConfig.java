@@ -19,7 +19,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowCredentials(true);
     }
 
-    // ⭐ 정적 리소스 핸들링 설정 추가
+    // 정적 리소스 핸들링 설정 추가
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // /uploads/** → 실제 파일 시스템 경로로 매핑

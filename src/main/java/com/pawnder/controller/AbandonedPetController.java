@@ -56,7 +56,10 @@ public class AbandonedPetController {
     //유기 조회 (유저/관리자)
     @Operation(summary = "유기동물 제보리스트 (JSON)")
     @GetMapping("/abandoned-pets")
-    public List<AbandonedPet> getAllAbandonedPets() {
+    public List<AbandonedPet> getAllAbandonedPets(@RequestParam(required = false) String keyword) {
+        if (keyword != null && !keyword.isEmpty()) {
+            return abandonPetService.searchAbandonedPets(keyword);
+        }
         return abandonPetService.getAllAbandonedPets();
     }
 
