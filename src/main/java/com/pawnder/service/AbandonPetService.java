@@ -1,5 +1,6 @@
 package com.pawnder.service;
 
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.pawnder.constant.PetStatus;
 import com.pawnder.dto.AbandonPetFormDto;
 import com.pawnder.entity.AbandonedPet;
@@ -13,8 +14,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 //유기동물 관련 서비스
 @Slf4j
@@ -24,6 +30,7 @@ public class AbandonPetService {
     private final AdoptPetFormRepository adoptPetFormRepository;
     private final UserRepository userRepository;
     private final AbandonedPetRepository abandonedPetRepository;
+    private final ElasticSearchService elasticSearchService;
 
     //유기동물 제보 form을 제보 DB에 저장하는 메서드 (유저)
     public void save(AbandonPetFormDto dto, String userId) {
@@ -36,6 +43,7 @@ public class AbandonPetService {
         pet.setLatitude(dto.getLatitude());
         pet.setLongitude(dto.getLongitude());
         pet.setImageUrl(dto.getImageUrl());
+        pet.setLocation(dto.getLocation());
         pet.setFoundDate(dto.getFoundDate());
         pet.setFoundTime(dto.getFoundTime());
         pet.setUser(user);
@@ -56,8 +64,12 @@ public class AbandonPetService {
         abandonedPet.setCreatedAt(LocalDateTime.now());
         abandonedPet.setImageUrl(form.getImageUrl());
         abandonedPet.setStatus(PetStatus.PROTECTING);
+        abandonedPet.setLocation(form.getLocation());
 
         abandonedPetRepository.save(abandonedPet);
+
+        elasticSearchService.indexAbandonedPet(abandonedPet);
+
         log.info("유기동물 등록 완료: formId={}, petId={}", formId, abandonedPet.getId());
 
     }
@@ -66,6 +78,10 @@ public class AbandonPetService {
     //유기동물 목록 조회 (유저 / 관리자 모두 조회 가능)
     public List<AbandonedPet> getAllAbandonedPets() {
         return abandonedPetRepository.findAll();
+    }
+
+    public List<AbandonedPet> searchAbandonedPets(String keyword) {
+        return elasticSearchService.searchAbandonedPets(keyword);
     }
 
 }

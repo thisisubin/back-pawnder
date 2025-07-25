@@ -20,6 +20,12 @@ public class AbandonPetFormDto {
     // 발견한 장소 경도
     private double longitude;
 
+    //타입 : 치와와, 잡종 등등
+    private String type;
+
+    // 발견한 지역
+    private String location;
+
     // 동물 이미지 (파일명 or URL or Multipart 처리용 필드)
     private String imageUrl; // 또는 MultipartFile image로 처리할 수도 있음
 

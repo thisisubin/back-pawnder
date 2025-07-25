@@ -4,6 +4,7 @@ import com.pawnder.constant.PetStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.elasticsearch.annotations.Document;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,6 +15,7 @@ import java.time.LocalTime;
 @Entity
 @Getter
 @Setter
+@Document(indexName = "abandoned_pets")
 public class AbandonedPet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,6 +27,8 @@ public class AbandonedPet {
     private LocalDate foundDate;          // 발견 날짜
     private LocalTime foundTime;          // 발견 시간
     private String description; // 특이사항
+    private String location; //발견된 지역
+
 
     @Enumerated(EnumType.STRING)
     private PetStatus status;// 상태 (ex: 보호중- PROTECTING, 입양완료 - ADOPTED 등)

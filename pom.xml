@@ -102,6 +102,20 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
+		<!-- elastic search -->
+		<dependency>
+			<groupId>co.elastic.clients</groupId>
+			<artifactId>elasticsearch-java</artifactId>
+			<version>8.13.4</version>
+		</dependency>
+
+		<!-- Spring Data Elasticsearch (Spring과 연동해서 @Document 사용 가능하게 함) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+		</dependency>
+
+
 	</dependencies>
 
 	<build>

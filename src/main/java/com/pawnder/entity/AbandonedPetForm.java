@@ -17,13 +17,15 @@ public class AbandonedPetForm {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String gender;
-    private String description;
-    private double latitude;
-    private double longitude;
-    private String imageUrl;
-    private LocalDate foundDate;
-    private LocalTime foundTime;
+    private String type; //품종
+    private String gender; //성별
+    private String description; //상태설명
+    private double latitude; //위도
+    private double longitude; //경도
+    private String location; //지역
+    private String imageUrl; //유기동물 사진
+    private LocalDate foundDate; //발견일
+    private LocalTime foundTime; //발견시각
 
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
