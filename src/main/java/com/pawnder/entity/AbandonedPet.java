@@ -24,7 +24,8 @@ public class AbandonedPet {
     private String gender;                // 성별 (M/F)
     private LocalDate foundDate;          // 발견 날짜
     private LocalTime foundTime;          // 발견 시간
-    private String description; // 특이사항
+    private String description;           // 특이사항
+    private String location;              // 발견된 장소
 
     @Enumerated(EnumType.STRING)
     private PetStatus status;// 상태 (ex: 보호중- PROTECTING, 입양완료 - ADOPTED 등)

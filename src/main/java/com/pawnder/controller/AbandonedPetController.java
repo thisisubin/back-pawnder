@@ -2,12 +2,16 @@ package com.pawnder.controller;
 
 import com.pawnder.dto.AbandonPetFormDto;
 import com.pawnder.entity.AbandonedPet;
+import com.pawnder.entity.AbandonedPetDocument;
 import com.pawnder.repository.AbandonedPetRepository;
+import com.pawnder.repository.AbandonedPetSearchRepository;
 import com.pawnder.service.AbandonPetService;
+import com.pawnder.service.AbandonedPetSearchService;
 import com.pawnder.service.FileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +20,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -26,6 +31,7 @@ public class AbandonedPetController {
     private final FileService fileService;
     private final AbandonPetService abandonPetService;
     private final AbandonedPetRepository abandonedPetRepository;
+    private final AbandonedPetSearchService abandonedPetSearchService;
 
     @Operation(summary = "유기동물 제보 (JSON)")
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -59,6 +65,19 @@ public class AbandonedPetController {
     public List<AbandonedPet> getAllAbandonedPets() {
         return abandonPetService.getAllAbandonedPets();
     }
+
+
+    //Elasticsearch 적용 검색 필터링
+    @Operation(summary = "유기동물 복합 조건 검색")
+    @GetMapping("/abandoned-pets/search")
+    public List<AbandonedPetDocument> searchAbandonedPets(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate foundDate) {
+
+        return abandonedPetSearchService.search(type, location, foundDate);
+    }
+
 
     @Operation(summary = "특정 유기동물 1마리에 대한 정보")
     @GetMapping("/abandoned-pets/{id}")
