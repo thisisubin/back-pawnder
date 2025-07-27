@@ -29,6 +29,12 @@ public class AbandonPetFormDto {
     // 특이사항 (ex. "다리를 절음", "사람을 잘 따름" 등)
     private String description;
 
+    // 발견된 지역
+    private String location;
+
+    // 품종
+    private String type;
+
     @Schema(type = "string", format = "date", example = "2025-07-09")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate foundDate;

@@ -24,6 +24,8 @@ public class AbandonedPetForm {
     private String imageUrl;
     private LocalDate foundDate;
     private LocalTime foundTime;
+    private String location;
+    private String type;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
