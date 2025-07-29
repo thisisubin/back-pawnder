@@ -21,13 +21,14 @@ public class AbandonedPetForm {
     private String description;
     private double latitude;
     private double longitude;
-    private String imageUrl;
-    private LocalDate foundDate;
-    private LocalTime foundTime;
+    private String imageUrl = "default-profile.png";
+    private String foundDate;
+    private String foundTime;
     private String location;
     private String type;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     private User user;
 }
 

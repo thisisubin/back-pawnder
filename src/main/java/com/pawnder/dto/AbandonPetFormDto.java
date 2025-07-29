@@ -1,5 +1,6 @@
 package com.pawnder.dto;
 
+import com.pawnder.entity.AbandonedPetForm;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,33 +15,42 @@ import java.time.LocalTime;
 @Setter
 @Schema(description = "유기동물 제보 DTO")
 public class AbandonPetFormDto {
-    // 발견한 장소 위도
+
+    private Long id;
+
     private double latitude;
-
-    // 발견한 장소 경도
     private double longitude;
-
-    // 동물 이미지 (파일명 or URL or Multipart 처리용 필드)
-    private String imageUrl; // 또는 MultipartFile image로 처리할 수도 있음
-
-    // 성별 (예: "수컷", "암컷", "중성화 여부 포함 등")
+    private String imageUrl;
     private String gender;
-
-    // 특이사항 (ex. "다리를 절음", "사람을 잘 따름" 등)
     private String description;
-
-    // 발견된 지역
     private String location;
-
-    // 품종
     private String type;
 
     @Schema(type = "string", format = "date", example = "2025-07-09")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate foundDate;
+    private String foundDate;
 
     @Schema(type = "string", format = "time", example = "14:30")
     @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
-    private LocalTime foundTime;
+    private String foundTime;
 
+    // 등록한 사용자 정보 (ID 또는 닉네임)
+    private String userId;
+
+    // 생성자 추가
+    public AbandonPetFormDto(AbandonedPetForm form) {
+        this.id = form.getId();
+        this.latitude = form.getLatitude();
+        this.longitude = form.getLongitude();
+        this.imageUrl = form.getImageUrl();
+        this.gender = form.getGender();
+        this.description = form.getDescription();
+        this.location = form.getLocation();
+        this.type = form.getType();
+        this.foundDate = form.getFoundDate().toString();
+        this.foundTime = form.getFoundTime().toString();
+
+        // 유저 ID 추가
+        this.userId = form.getUser().getUserId(); // 또는 .getEmail() 혹은 .getNickname()
+    }
 }

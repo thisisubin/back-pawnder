@@ -6,13 +6,15 @@ import com.pawnder.entity.AbandonedPet;
 import com.pawnder.entity.AbandonedPetForm;
 import com.pawnder.entity.User;
 import com.pawnder.repository.AbandonedPetRepository;
-import com.pawnder.repository.AdoptPetFormRepository;
+import com.pawnder.repository.AbandonedPetFormRepository;
 import com.pawnder.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,13 +23,15 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AbandonPetService {
-    private final AdoptPetFormRepository adoptPetFormRepository;
+    private final AbandonedPetFormRepository abandonedPetFormRepository;
     private final UserRepository userRepository;
     private final AbandonedPetRepository abandonedPetRepository;
     private final AbandonedPetElasticService abandonedPetElasticService;
+    private final FileService fileService;
+
 
     //유기동물 제보 form을 제보 DB에 저장하는 메서드 (유저)
-    public void save(AbandonPetFormDto dto, String userId) {
+    public void save(AbandonPetFormDto dto, String userId, MultipartFile imagurl) throws IOException {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
 
@@ -43,13 +47,21 @@ public class AbandonPetService {
         pet.setLocation(dto.getLocation());
         pet.setUser(user);
 
-        adoptPetFormRepository.save(pet);
+        // 프로필 이미지 처리
+        if (imagurl != null && !imagurl.isEmpty()) {
+            String savedFileName = fileService.uploadFile(imagurl); // 파일 저장 서비스
+            pet.setImageUrl(savedFileName);
+        } else {
+            pet.setImageUrl("/images/default-profile.png");
+        }
+
+        abandonedPetFormRepository.save(pet);
     }
 
     //유기동물 확정 (관리자 등록) - 제보된 폼에 있는 필드 정보를 관리자가 AbandonedPet 엔티티에 (PROTECTING) 저장
     @Transactional
     public void registerAsAbandonedPet(Long formId) {
-        AbandonedPetForm form = adoptPetFormRepository.findById(formId)
+        AbandonedPetForm form = abandonedPetFormRepository.findById(formId)
                 .orElseThrow(() -> new IllegalArgumentException("제보서 없음"));
         AbandonedPet abandonedPet = new AbandonedPet();
         abandonedPet.setGender(form.getGender());
@@ -72,13 +84,6 @@ public class AbandonPetService {
         } catch (Exception e) {
             log.error("Elasticsearch 저장 실패: petId={}", abandonedPet.getId(), e);
         }
-    }
-
-
-
-    //유기동물 목록 조회 (유저 / 관리자 모두 조회 가능)
-    public List<AbandonedPet> getAllAbandonedPets() {
-        return abandonedPetRepository.findAll();
     }
 
 }

@@ -22,8 +22,8 @@ public class AbandonedPet {
     // 제보 기반 정보
     private String type;                  // 품종
     private String gender;                // 성별 (M/F)
-    private LocalDate foundDate;          // 발견 날짜
-    private LocalTime foundTime;          // 발견 시간
+    private String foundDate;          // 발견 날짜
+    private String foundTime;          // 발견 시간
     private String description;           // 특이사항
     private String location;              // 발견된 장소
 
