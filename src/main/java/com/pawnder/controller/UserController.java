@@ -92,7 +92,7 @@ public class UserController {
             SecurityContext context = SecurityContextHolder.getContext();
             context.setAuthentication(authToken);
 
-            // ✅ 세션에 SecurityContext 저장
+            // 세션에 SecurityContext 저장
             session.setAttribute("SPRING_SECURITY_CONTEXT", context);
 
             return ResponseEntity.ok("로그인 성공!");
