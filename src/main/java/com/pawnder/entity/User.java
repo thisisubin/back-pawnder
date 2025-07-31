@@ -1,5 +1,6 @@
 package com.pawnder.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.pawnder.constant.Role;
 import com.pawnder.dto.UserSignUpDto;
 import jakarta.persistence.*;
@@ -31,5 +32,6 @@ public class User {
     private Role role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private List<Pet> pets = new ArrayList<>();
 }

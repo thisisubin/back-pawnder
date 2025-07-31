@@ -45,6 +45,7 @@ public class AbandonPetService {
         pet.setFoundTime(dto.getFoundTime());
         pet.setType(dto.getType());
         pet.setLocation(dto.getLocation());
+        pet.setStatus(PetStatus.LOST);
         pet.setUser(user);
 
         // 프로필 이미지 처리
@@ -73,6 +74,11 @@ public class AbandonPetService {
         abandonedPet.setStatus(PetStatus.PROTECTING);
         abandonedPet.setLocation(form.getLocation());
         abandonedPet.setType(form.getType());
+        abandonedPet.setAbandonedPetForm(form);
+
+        //AbandonedPetFormRepository에서 id를 꺼내와서
+        //그 id의 Status를 PROTECTING으로 Update
+        form.setStatus(PetStatus.PROTECTING);
 
         abandonedPetRepository.save(abandonedPet);
 

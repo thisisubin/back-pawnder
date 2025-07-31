@@ -1,5 +1,6 @@
 package com.pawnder.controller;
 
+import co.elastic.clients.elasticsearch.nodes.Http;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pawnder.config.SessionUtil;
 import com.pawnder.dto.PetProfileDto;
@@ -39,15 +40,15 @@ public class PetController {
     @Operation(summary = "나의 반려견 등록")
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> enrollPet(
+            HttpSession session,
             @RequestPart("pet") String petJson,
-            @RequestPart("profile") MultipartFile profileImage,
-            HttpServletRequest request) {
+            @RequestPart("profile") MultipartFile profileImage) {
 
         Map<String, Object> response = new HashMap<>();
 
         try {
             // 현재 로그인한 사용자 정보 가져오기
-            String userId = getCurrentUserId(request);
+            String userId = SessionUtil.getLoginUserId(session);
             if (userId == null) {
                 response.put("success", false);
                 response.put("message", "로그인이 필요합니다.");
@@ -77,7 +78,7 @@ public class PetController {
     @GetMapping("/profile/pets")
     public ResponseEntity<?> getUserPets(HttpSession session) {
         try {
-            // ✅ 올바른 방식: SessionUtil 사용
+            //SessionUtil 사용
             String userId = SessionUtil.getLoginUserId(session);
             if (userId == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
@@ -140,12 +141,13 @@ public class PetController {
             @PathVariable String petId,
             @RequestPart("pet") String petJson,
             @RequestPart(value = "profile", required = false) MultipartFile profileImage,
-            HttpServletRequest request) {
+            HttpSession session) {
 
         Map<String, Object> response = new HashMap<>();
 
+        //유저 아이디를 세션에서 가져와야 하는지,, 다시 생각해보기
         try {
-            String userId = getCurrentUserId(request);
+            String userId = SessionUtil.getLoginUserId(session);
             if (userId == null) {
                 response.put("success", false);
                 response.put("message", "로그인이 필요합니다.");
@@ -177,11 +179,11 @@ public class PetController {
 
     @Operation(summary = "반려견 삭제")
     @DeleteMapping("/delete/{petId}")
-    public ResponseEntity<Map<String, Object>> deletePet(@PathVariable String petId, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> deletePet(@PathVariable String petId, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            String userId = getCurrentUserId(request);
+            String userId = SessionUtil.getLoginUserId(session);
             if (userId == null) {
                 response.put("success", false);
                 response.put("message", "로그인이 필요합니다.");
@@ -205,38 +207,6 @@ public class PetController {
             response.put("success", false);
             response.put("message", "반려견 정보 삭제 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-    /**
-     * 현재 로그인한 사용자의 userId를 가져오는 헬퍼 메서드
-     */
-    private String getCurrentUserId(HttpServletRequest request) {
-        try {
-            // 1. 세션에서 먼저 확인
-            HttpSession session = request.getSession(false);
-            if (session != null) {
-                User sessionUser = SessionUtil.getLoginUser(session);
-                if (sessionUser != null) {
-                    return sessionUser.getUserId();
-                }
-
-                // 또는 String으로 저장된 userId 확인
-                String userId = SessionUtil.getLoginUserId(session);
-                if (userId != null) {
-                    return userId;
-                }
-            }
-
-            // 2. Spring Security에서 확인
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
-                return auth.getName();
-            }
-
-            return null;
-        } catch (Exception e) {
-            log.error("사용자 ID 조회 중 오류 발생", e);
-            return null;
         }
     }
 }

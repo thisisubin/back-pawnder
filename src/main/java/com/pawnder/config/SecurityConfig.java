@@ -32,6 +32,11 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         log.info("✅ SecurityFilterChain 설정 적용됨");
 
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String rawPassword = "admin1234**";  // 평문 비밀번호
+        String encodedPassword = encoder.encode(rawPassword);  // 암호화된 비밀번호
+        System.out.println("Encoded Password: " + encodedPassword);
+
         http
                 .cors()
                 .and()
@@ -44,6 +49,7 @@ public class SecurityConfig {
                                 "/api/users/login",
                                 "/api/users/logout",
                                 "/api/users/check-session",
+                                "/community",
 
                                 "/swagger-ui/**",         // Swagger UI 리소스
                                 "/v3/api-docs/**"         // OpenAPI 문서 경로

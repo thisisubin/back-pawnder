@@ -17,6 +17,8 @@ import java.time.LocalDate;
 @Schema(description = "회원가입 요청 DTO")
 public class UserSignUpDto {
 
+    private Long id;
+
     @Schema(description = "사용자 이름", example = "홍길동")
     @NotBlank(message = "이름은 필수 입력 값입니다.")
     private String name;
