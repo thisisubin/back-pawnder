@@ -37,6 +37,9 @@ public class AbandonPetFormDto {
     // 등록한 사용자 정보 (ID 또는 닉네임)
     private String userId;
 
+    // 기본 생성자 추가 (Jackson이 사용)
+    public AbandonPetFormDto() {}
+
     // 생성자 추가
     public AbandonPetFormDto(AbandonedPetForm form) {
         this.id = form.getId();

@@ -142,7 +142,7 @@ public class PetService {
             return false;
         }
 
-        // 4. 프로필 이미지 파일 삭제 (선택)
+        // 4. 프로필 이미지 파일 삭제
         if (pet.getProfile() != null && pet.getProfile().startsWith("/uploads/")) {
             fileService.deleteFile(pet.getProfile());
         }

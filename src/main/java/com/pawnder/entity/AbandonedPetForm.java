@@ -1,5 +1,6 @@
 package com.pawnder.entity;
 
+import com.pawnder.constant.PetStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,6 +27,9 @@ public class AbandonedPetForm {
     private String foundTime;
     private String location;
     private String type;
+
+    @Enumerated(EnumType.STRING)
+    private PetStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

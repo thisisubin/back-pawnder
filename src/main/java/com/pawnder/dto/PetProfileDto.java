@@ -3,6 +3,7 @@ package com.pawnder.dto;
 import com.pawnder.constant.Gender;
 import com.pawnder.constant.Size;
 import com.pawnder.entity.Pet;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,6 +13,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Data
+@Schema(name = "반려동물 프로필 DTO")
 public class PetProfileDto {
     //이름
     private String name;

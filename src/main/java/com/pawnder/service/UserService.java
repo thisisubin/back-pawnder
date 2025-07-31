@@ -113,6 +113,7 @@ public class UserService implements UserDetailsService {
 
         // 2. DTO -> ENTITY 변환 회원생성
         User user = new User();
+        user.setId(dto.getId());
         user.setName(dto.getName());
         user.setUserId(dto.getUserId());
         user.setEmail(dto.getEmail());
