@@ -1,5 +1,6 @@
 package com.pawnder.dto;
 
+import com.pawnder.constant.PetStatus;
 import com.pawnder.entity.AbandonedPetForm;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -25,6 +26,7 @@ public class AbandonPetFormDto {
     private String description;
     private String location;
     private String type;
+    private PetStatus status;
 
     @Schema(type = "string", format = "date", example = "2025-07-09")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -52,6 +54,7 @@ public class AbandonPetFormDto {
         this.type = form.getType();
         this.foundDate = form.getFoundDate().toString();
         this.foundTime = form.getFoundTime().toString();
+        this.status = form.getStatus();
 
         // 유저 ID 추가
         this.userId = form.getUser().getUserId(); // 또는 .getEmail() 혹은 .getNickname()

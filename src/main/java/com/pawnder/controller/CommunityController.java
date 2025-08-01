@@ -1,16 +1,24 @@
 package com.pawnder.controller;
 
+import co.elastic.clients.elasticsearch.nodes.Http;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pawnder.config.SessionUtil;
+import com.pawnder.dto.CommentDto;
 import com.pawnder.dto.CommunityPostDto;
+import com.pawnder.dto.LikeDto;
+import com.pawnder.entity.Comment;
 import com.pawnder.entity.User;
+import com.pawnder.repository.LikesRepository;
 import com.pawnder.repository.PetRepository;
 import com.pawnder.repository.UserRepository;
+import com.pawnder.service.CommentService;
 import com.pawnder.service.CommunityService;
+import com.pawnder.service.LikesService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpSession;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,6 +34,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -35,12 +44,16 @@ public class CommunityController {
     private final CommunityService communityService;
     private final UserRepository userRepository;
     private final PetRepository petRepository;
+    private final CommentService commentService;
+    private final LikesService likesService;
+    private final LikesRepository likesRepository;
+
     @Operation(summary = "커뮤니티 글 작성")
     @PostMapping("/createPost")
     public ResponseEntity<Map<String, Object>> createPost(
             HttpSession session,
-            @RequestPart("imgUrl") MultipartFile imgUrl,
-            @RequestPart("post") CommunityPostDto postDto) throws IOException {
+            @RequestPart(value = "imgUrlContent", required = false) MultipartFile imgUrlContent,
+            @RequestPart("communityPost") CommunityPostDto communityPostDto) throws IOException {
         Map<String, Object> response = new HashMap<>();
 
         //SessionUtil에서 로그인 세션 가져오기
@@ -53,10 +66,10 @@ public class CommunityController {
 
         try {
             // 포스트 저장
-            communityService.savePost(postDto, userId, imgUrl);
+            communityService.savePost(communityPostDto, userId, imgUrlContent);
 
-            response.put("success", false);
-            response.put("message", "등록 중 오류가 발생했습니다.");
+            response.put("success", true);
+            response.put("message", "게시글이 성공적으로 등록되었습니다.");
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -89,16 +102,15 @@ public class CommunityController {
     }
 
     @Operation(summary = "커뮤니티 글 상세 수정")
-    @PutMapping(value = "/description/{postId}/edit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/description/{postId}/edit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, Object>> editPost(
             @PathVariable Long postId,
-            @RequestParam("userId") String userId,
             @RequestPart("communityPost") CommunityPostDto communityPostDto,
-            @RequestPart(value = "imgurlContent", required = false) MultipartFile imgurlContent
+            @RequestPart(value = "imgUrlContent", required = false) MultipartFile imgUrlContent
     ) {
         Map<String, Object> response = new HashMap<>();
         try {
-            boolean result = communityService.editPost(postId, userId, communityPostDto, imgurlContent);
+            boolean result = communityService.editPost(postId, communityPostDto, imgUrlContent);
             response.put("success", result);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -109,10 +121,10 @@ public class CommunityController {
 
     @Operation(summary = "커뮤니티 글 상세 삭제")
     @DeleteMapping("/description/{postId}/delete")
-    public ResponseEntity<Map<String, Object>> deletePost(@PathVariable Long postId, @RequestParam ("userId") String userId){
+    public ResponseEntity<Map<String, Object>> deletePost(@PathVariable Long postId) {
         Map<String, Object> response = new HashMap<>();
         try {
-            boolean result = communityService.deletePost(postId, userId);
+            boolean result = communityService.deletePost(postId);
             response.put("success", result);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -121,16 +133,53 @@ public class CommunityController {
         }
     }
 
-
+    //LikeService
     @Operation(summary = "좋아요 달기")
-    @PostMapping("/like")
-    public ResponseEntity<?> likePost() {
+    @PostMapping("/like/{postId}")
+    public ResponseEntity<?> postLike(@PathVariable Long postId, HttpSession session, @RequestBody LikeDto likeDto) {
+        String userId = SessionUtil.getLoginUserId(session);
+        likesService.saveLike(postId, userId);
         return ResponseEntity.ok("좋아요 완료");
     }
 
+    //CommentService
     @Operation(summary = "댓글 달기")
-    @PostMapping("/comment")
-    public ResponseEntity<?> commentPost() {
-        return ResponseEntity.ok("댓글 등록 완료");
+    @PostMapping("/comment/{postId}")
+    public ResponseEntity<Map<String, Object>> postComment(
+            @PathVariable Long postId,
+            HttpSession session,
+            @RequestBody CommentDto commentDto // 아래에서 설명
+    ) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            String userId = SessionUtil.getLoginUserId(session);
+
+            commentService.saveComment(commentDto, postId, userId);
+
+            response.put("message", "댓글 등록 완료");
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (Exception e) {
+            response.put("error", "오류 발생: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
+
+    @Operation(summary = "좋아요 개수 GET")
+    @GetMapping("/like/{postId}/count")
+    public ResponseEntity<?> getLikeAll(@PathVariable Long postId) {
+        Long likeCount = likesService.countLike(postId);
+        return ResponseEntity.ok(Map.of("postId", postId, "likeCount", likeCount));
+    }
+
+    @Operation(summary = "게시글 별 모든 댓글 내용 GET")
+    @GetMapping("/comments/{postId}")
+    public ResponseEntity<List<CommentDto>> getAllComments(@PathVariable Long postId) {
+        List<CommentDto> comments = commentService.getCommentsByPostId(postId);
+        return ResponseEntity.ok(comments);
+    }
+
 }

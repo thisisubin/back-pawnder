@@ -49,7 +49,7 @@ public class SecurityConfig {
                                 "/api/users/login",
                                 "/api/users/logout",
                                 "/api/users/check-session",
-                                "/community",
+                                "/api/community/**",
 
                                 "/swagger-ui/**",         // Swagger UI 리소스
                                 "/v3/api-docs/**"         // OpenAPI 문서 경로
