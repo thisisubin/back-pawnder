@@ -3,14 +3,19 @@ package com.pawnder.controller;
 import com.pawnder.config.SessionUtil;
 import com.pawnder.constant.Role;
 import com.pawnder.dto.AbandonPetFormDto;
+import com.pawnder.dto.AdoptPetDto;
 import com.pawnder.entity.AbandonedPet;
 import com.pawnder.entity.AbandonedPetForm;
+import com.pawnder.entity.AdoptPet;
 import com.pawnder.entity.User;
 import com.pawnder.repository.AbandonedPetFormRepository;
+import com.pawnder.repository.AdoptPetRepository;
 import com.pawnder.service.AbandonPetService;
+import com.pawnder.service.AdoptPetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,6 +38,8 @@ public class AdminController {
 
     private final AbandonPetService abandonPetService;
     private final AbandonedPetFormRepository abandonedPetFormRepository;
+    private final AdoptPetService adoptPetService;
+    private final AdoptPetRepository adoptPetRepository;
 
     @Operation(summary = "유기동물 제보 등록 (관리자만)")
     @PostMapping("/reports/{id}/register")
@@ -79,6 +86,26 @@ public class AdminController {
         return ResponseEntity.ok(dto);
     }
 
+    //관리자 -> 입양 신청 조회
+    @Operation(summary = "입양 신청 전체 조회 (관리자용)")
+    @GetMapping("/adopt-applications")
+    public ResponseEntity<List<AdoptPetDto>> getAllApplications() {
+        List<AdoptPet> adoptPets = adoptPetRepository.findAll();
+
+        List<AdoptPetDto> result = adoptPets.stream()
+                .map(AdoptPetDto::new)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
+    }
+
+    // 관리자 -> 입양 승인시
+    @Operation(summary = "유기견 입양 승인")
+    @PostMapping("/adopt/approve/{id}")
+    public ResponseEntity<?> approveAdoption(@PathVariable Long id) {
+        adoptPetService.approveAdoption(id);
+        return ResponseEntity.ok("승인됨");
+    }
 
 }
 
