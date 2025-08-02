@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .csrf().disable()
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                                "/",
+                                "/",    //메인
                                 "/api/users/signup",
                                 "/api/users/send-email",
                                 "/api/users/verify-email",
