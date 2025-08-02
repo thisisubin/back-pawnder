@@ -46,7 +46,7 @@ jobs:
           host: ${{ env.EC2_HOST }}
           username: ubuntu
           key: ${{ env.EC2_SSH_KEY }}
-          timeout: 600
+          timeout: 10m
           script: |
             mkdir -p ~/app
             pkill -f 'java' || true
