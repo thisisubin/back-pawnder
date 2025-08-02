@@ -41,11 +41,12 @@ jobs:
           target: "~/app"
 
       - name: SSH EC2 and restart app
-        uses: appleboy/ssh-action@v1.8.1
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ env.EC2_HOST }}
           username: ubuntu
           key: ${{ env.EC2_SSH_KEY }}
+          timeout: 600
           script: |
             mkdir -p ~/app
             pkill -f 'java' || true
