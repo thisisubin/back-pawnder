@@ -1,4 +1,5 @@
-# backend-repo/.github/workflows/deploy.yml 어렵다
+name: Deploy to EC2
+
 on:
   push:
     branches:
@@ -7,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Git clone
         uses: actions/checkout@v3
@@ -17,16 +19,16 @@ jobs:
           distribution: 'temurin'
           java-version: '22'
 
-      - name: Build
-        run: ./gradlew clean build
+      - name: Build with Maven
+        run: mvn clean install
 
       - name: Deploy to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
-          key: ${{ secrets.Pawnder }}
-          source: "./build/libs/*.jar"
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "target/*.jar"
           target: "~/app"
 
       - name: SSH EC2 and restart app
@@ -34,7 +36,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
-          key: ${{ secrets.Pawnder }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             pkill -f 'java'
             nohup java -jar ~/app/*.jar > nohup.out 2>&1 &
