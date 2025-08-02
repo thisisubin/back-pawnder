@@ -9,6 +9,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+
     # 환경변수 전역 설정 (workflow 내 모든 steps에서 사용 가능)
     env:
       MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
@@ -40,7 +41,7 @@ jobs:
           target: "~/app"
 
       - name: SSH EC2 and restart app
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.8.1
         with:
           host: ${{ env.EC2_HOST }}
           username: ubuntu
