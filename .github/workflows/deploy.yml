@@ -54,4 +54,4 @@ jobs:
             nohup java -Dspring.datasource.username=${MYSQL_USER} \
                        -Dspring.datasource.password=${MYSQL_ROOT_PASSWORD} \
                        -Dspring.datasource.url=jdbc:mysql://localhost:3306/${MYSQL_DATABASE} \
-                       -jar *.jar > nohup.out 2>&1 &
+                       -jar *.jar > nohup.out 2>&1 & disown
