@@ -38,12 +38,6 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            pkill -f 'java'
-            nohup java -jar ~/app/*.jar > nohup.out 2>&1 &
-
-      - name: Set up SSH Key
-        run: |
-          echo "$EC2_SSH_KEY" > ec2-key.pem
-          chmod 600 ec2-key.pem
-        env:
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+            mkdir -p ~/app
+            pkill -f 'java' || true
+            nohup java -jar ~/app/*.jar > ~/app/nohup.out 2>&1 &
