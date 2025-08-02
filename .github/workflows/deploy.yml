@@ -1,4 +1,4 @@
-# backend-repo/.github/workflows/deploy.yml
+# backend-repo/.github/workflows/deploy.yml 어렵다
 on:
   push:
     branches:
