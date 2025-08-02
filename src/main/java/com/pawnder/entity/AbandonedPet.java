@@ -28,6 +28,7 @@ public class AbandonedPet {
     private String location;              // 발견된 장소
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private PetStatus status;// 상태 (ex: 보호중- PROTECTING, 입양완료 - ADOPTED 등)
 
     // 이미지 경로

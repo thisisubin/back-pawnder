@@ -1,6 +1,7 @@
 package com.pawnder.dto;
 
 import com.pawnder.constant.PetStatus;
+import com.pawnder.entity.AbandonedPet;
 import com.pawnder.entity.AbandonedPetForm;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -59,4 +60,5 @@ public class AbandonPetFormDto {
         // 유저 ID 추가
         this.userId = form.getUser().getUserId(); // 또는 .getEmail() 혹은 .getNickname()
     }
+
 }

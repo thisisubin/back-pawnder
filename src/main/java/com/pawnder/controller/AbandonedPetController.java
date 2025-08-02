@@ -2,11 +2,14 @@ package com.pawnder.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pawnder.config.SessionUtil;
+import com.pawnder.constant.PetStatus;
 import com.pawnder.dto.AbandonPetFormDto;
 import com.pawnder.dto.PetProfileDto;
 import com.pawnder.entity.AbandonedPet;
 import com.pawnder.entity.AbandonedPetDocument;
+import com.pawnder.entity.AbandonedPetForm;
 import com.pawnder.entity.User;
+import com.pawnder.repository.AbandonedPetFormRepository;
 import com.pawnder.repository.AbandonedPetRepository;
 import com.pawnder.repository.AbandonedPetSearchRepository;
 import com.pawnder.service.AbandonPetService;
@@ -35,6 +38,8 @@ import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -44,6 +49,7 @@ public class AbandonedPetController {
     private final AbandonPetService abandonPetService;
     private final AbandonedPetRepository abandonedPetRepository;
     private final AbandonedPetSearchService abandonedPetSearchService;
+    private final AbandonedPetFormRepository abandonedPetFormRepository;
 
     @Operation(summary = "유기동물 제보")
     @PostMapping(value = "/register")
@@ -90,6 +96,18 @@ public class AbandonedPetController {
             @RequestParam(required = false) String location) {
 
         return abandonedPetSearchService.search(foundDate, foundTime, location);
+    }
+
+    //유기견 조회 (유저/관리자)
+    @Operation(summary = "유기동물 승인 제보리스트 (JSON) 조회")
+    @GetMapping("/abandoned-pets")
+    public ResponseEntity<List<AbandonPetFormDto>> getAll() {
+        List<PetStatus> statuses = List.of(PetStatus.PROTECTING, PetStatus.WAITING);
+        List<AbandonedPetForm> pets = abandonedPetFormRepository.findByStatusIn(statuses);
+        List<AbandonPetFormDto> dtoList = pets.stream()
+                .map(AbandonPetFormDto::new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtoList);
     }
 
 

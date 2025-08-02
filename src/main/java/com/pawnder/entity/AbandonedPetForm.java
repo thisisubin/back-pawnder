@@ -29,6 +29,7 @@ public class AbandonedPetForm {
     private String type;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private PetStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)

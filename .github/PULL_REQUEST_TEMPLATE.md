@@ -1,19 +1,18 @@
 ### 📌 PR 개요
-<!-- 이 PR이 어떤 기능/수정/버그패치인지 간략하게 설명해주세요 -->
-커뮤니티의 전반적인 기능을 구현했습니다.
+관리자가 입양 신청을 승인할 수 있는 기능을 구현했습니다.
 
 ---
 
 ### 🔨 작업 내용 요약
-<!-- 주요 변경사항을 bullet 형식으로 요약해 주세요 -->
-- 기능 추가: 로그인된 사용자의 session으로 게시글을 작성할 수 있도록 구현 (`/api/community/createPost`)
-- 기능 추가: 로그인된 사용자의 session으로 게시글을 수정할 수 있도록 구현 (`/api/community/description/{postId}/edit`)
-- 기능 추가: 커뮤니티 전체 글 조회 기능 구현 (`/api/community/posts`)
-- 기능 추가: 커뮤니티 상세 글 조회 기능 구현 (`/api/community/description/{postId}`)
-- 기능 추가: 커뮤니티 상세 글 삭제 기능 구현 (`/api/community/description/{postId}/delete`)
+- 기능 추가: 입양 신청 승인 기능 구현 (`approveAdoption`)
+- 수정: AdoptPet ID 기반으로 AbandonedPet, AbandonedPetForm 상태 변경
+- 프론트 연동: 승인 버튼 클릭 시 adoptPetId 기반으로 승인 요청 전송
+
 ---
 
-
 ### ✅ 상세 구현 내용
-<!-- 상세하게 어떤 작업을 했는지 설명해주세요 -->
-
+- `approveAdoption(Long adoptPetId)` 메서드에서 AdoptPet ID를 기준으로 입양 신청을 조회
+- 해당 입양 신청과 연관된 AbandonedPet 및 AbandonedPetForm 엔티티 상태를 `ADOPT`로 변경
+- AdoptPet 상태는 `APPROVED`로 변경되며 승인 시각도 함께 기록
+- 기존에 잘못된 `petId` 기반 로직 제거하고 올바른 관계 기반 처리 방식 적용
+- React 프론트엔드에서 "승인" 버튼 클릭 시 `adoptPetId`가 서버로 전달되도록 연동 완료
