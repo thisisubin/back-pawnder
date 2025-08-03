@@ -33,3 +33,27 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# macOS
+.DS_Store
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Maven
+target/
+.mvn/
+
+# 환경 변수 파일
+.env
+
+# 로그 파일
+*.log
+
+# 테스트 및 임시 파일
+cookies.txt
+test.jpg
+
+# OS/에디터별 불필요 파일
+Thumbs.db
