@@ -17,10 +17,6 @@ jobs:
       MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
       EC2_HOST: ${{ secrets.EC2_HOST }}
       EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-      CUSTOMVISION_PREDICTION_KEY: ${{ secrets.CUSTOMVISION_PREDICTION_KEY }}
-      CUSTOMVISION_ENDPOINT: ${{ secrets.CUSTOMVISION_ENDPOINT }}
-      CUSTOMVISION_PROJECT_ID: ${{ secrets.CUSTOMVISION_PROJECT_ID }}
-      CUSTOMVISION_PUBLISH_NAME: ${{ secrets.CUSTOMVISION_PUBLISH_NAME }}
 
     steps:
       - name: Git clone
