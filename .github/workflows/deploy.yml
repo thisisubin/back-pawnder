@@ -33,7 +33,7 @@ jobs:
           java-version: '22'
 
       - name: Build with Maven
-        run: mvn clean package -DskipTests
+        run: mvn clean package -DskipTests -Dspring.profiles.active=prod
 
       - name: Deploy to EC2
         uses: appleboy/scp-action@master
