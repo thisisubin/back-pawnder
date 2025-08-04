@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
-//유기동물 관련 서비스
+//유기동물 관련 서비스 - 제보
 @Slf4j
 @Service
 @RequiredArgsConstructor
