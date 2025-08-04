@@ -2,6 +2,7 @@ package com.pawnder.service;
 
 import com.pawnder.constant.PetStatus;
 import com.pawnder.dto.AbandonPetFormDto;
+import com.pawnder.dto.PredictionResultDto;
 import com.pawnder.entity.AbandonedPet;
 import com.pawnder.entity.AbandonedPetForm;
 import com.pawnder.entity.User;
@@ -28,6 +29,7 @@ public class AbandonPetService {
     private final AbandonedPetRepository abandonedPetRepository;
     private final AbandonedPetElasticService abandonedPetElasticService;
     private final FileService fileService;
+    private final CustomVisionService customVisionService;
 
 
     //유기동물 제보 form을 제보 DB에 저장하는 메서드 (유저)
@@ -43,10 +45,23 @@ public class AbandonPetService {
         pet.setImageUrl(dto.getImageUrl());
         pet.setFoundDate(dto.getFoundDate());
         pet.setFoundTime(dto.getFoundTime());
-        pet.setType(dto.getType());
         pet.setLocation(dto.getLocation());
         pet.setStatus(PetStatus.LOST);
         pet.setUser(user);
+
+        // 1. 이미지로 품종 예측
+        String predictedType = "믹스견";
+        if (imagurl != null && !imagurl.isEmpty()) {
+            byte[] imageBytes = imagurl.getBytes();
+            PredictionResultDto.Prediction topPrediction = customVisionService.getTopPrediction(imageBytes);
+            predictedType = topPrediction.getTagName(); // 예: "Bichon", "Poodle"
+        }
+
+        log.info("예측된 품종 타입 : " + predictedType);
+
+        // 2. 예측된 품종으로 type 설정
+        pet.setType(predictedType);
+
 
         // 프로필 이미지 처리
         if (imagurl != null && !imagurl.isEmpty()) {

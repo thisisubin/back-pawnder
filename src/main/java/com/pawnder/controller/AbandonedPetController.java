@@ -10,10 +10,9 @@ import com.pawnder.entity.AbandonedPetDocument;
 import com.pawnder.entity.AbandonedPetForm;
 import com.pawnder.entity.User;
 import com.pawnder.repository.AbandonedPetFormRepository;
-import com.pawnder.repository.AbandonedPetRepository;
-import com.pawnder.repository.AbandonedPetSearchRepository;
 import com.pawnder.service.AbandonPetService;
 import com.pawnder.service.AbandonedPetSearchService;
+import com.pawnder.service.CustomVisionService;
 import com.pawnder.service.FileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +32,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.HashMap;
@@ -46,16 +46,17 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/abandoned")
 @Tag(name = "AbandonPet", description = "유기동물 관련 API")
 public class AbandonedPetController {
+
     private final AbandonPetService abandonPetService;
-    private final AbandonedPetRepository abandonedPetRepository;
     private final AbandonedPetSearchService abandonedPetSearchService;
     private final AbandonedPetFormRepository abandonedPetFormRepository;
+    private final CustomVisionService customVisionService;
 
     @Operation(summary = "유기동물 제보")
     @PostMapping(value = "/register")
     public ResponseEntity<Map<String, Object>> registerAbandonedPet(
             @RequestPart("abandoned-pet") String abandonedPetJson,
-            @RequestPart("imageurl")MultipartFile imageurl,
+            @RequestPart("imageurl") MultipartFile imageurl,
             HttpServletRequest request) {
 
         Map<String, Object> response = new HashMap<>();
@@ -110,6 +111,14 @@ public class AbandonedPetController {
         return ResponseEntity.ok(dtoList);
     }
 
+    @Operation(summary = "AI 품종 예측 요청")
+    @PostMapping("/predict")
+    public ResponseEntity<Map<String, String>> predict(@RequestPart("imageurl") MultipartFile imageurl) throws IOException {
+        byte[] imageBytes = imageurl.getBytes();
+        String predictedBreed = customVisionService.getTopPrediction(imageBytes).getTagName();
+        Map<String, String> result = Map.of("predictedBreed", predictedBreed);
+        return ResponseEntity.ok(result);
+    }
 
     /**
      * 현재 로그인한 사용자의 userId를 가져오는 헬퍼 메서드
@@ -143,4 +152,5 @@ public class AbandonedPetController {
             return null;
         }
     }
+
 }
