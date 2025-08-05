@@ -48,7 +48,9 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           timeout: 10m
           script: |
-            sudi systemctl restart nginx
+            sudo systemctl restart elasticsearch
+            sudo systemctl restart redis-server
+            sudo systemctl restart nginx
             sudo systemctl restart myapp.service
             journalctl -u myapp.service -n 100 --no-pager
             sudo sync
