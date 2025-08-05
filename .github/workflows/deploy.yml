@@ -40,7 +40,7 @@ jobs:
           source: "target/*.jar"
           target: "~/app"
 
-      - name: SSH EC2 and restart app
+      - name: SSH EC2 and restart app and elasticsearch
         uses: appleboy/ssh-action@master
         with:
           host: ${{ env.EC2_HOST }}
@@ -48,6 +48,7 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           timeout: 10m
           script: |
+            sudi systemctl restart nginx
             sudo systemctl restart myapp.service
             journalctl -u myapp.service -n 100 --no-pager
             sudo sync
