@@ -4,16 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pawnder.config.SessionUtil;
 import com.pawnder.constant.PetStatus;
 import com.pawnder.dto.AbandonPetFormDto;
+import com.pawnder.dto.DonationVerifyRequest;
 import com.pawnder.dto.PetProfileDto;
-import com.pawnder.entity.AbandonedPet;
-import com.pawnder.entity.AbandonedPetDocument;
-import com.pawnder.entity.AbandonedPetForm;
-import com.pawnder.entity.User;
+import com.pawnder.entity.*;
 import com.pawnder.repository.AbandonedPetFormRepository;
-import com.pawnder.service.AbandonPetService;
-import com.pawnder.service.AbandonedPetSearchService;
-import com.pawnder.service.CustomVisionService;
-import com.pawnder.service.FileService;
+import com.pawnder.repository.DonationRepository;
+import com.pawnder.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -118,6 +114,38 @@ public class AbandonedPetController {
         String predictedBreed = customVisionService.getTopPrediction(imageBytes).getTagName();
         Map<String, String> result = Map.of("predictedBreed", predictedBreed);
         return ResponseEntity.ok(result);
+    }
+
+    private final IamportService iamportService;
+    private final DonationRepository donationRepository;
+    private final DonationService donationService;
+
+    @Operation(summary = "유기견 후원결제")
+    @PostMapping("/donation/{imp_uid}")
+    public ResponseEntity<?> donation(@ModelAttribute DonationVerifyRequest request) {
+        try {
+            System.out.println("DonationVerifyRequest: " + request);
+            Map<String, Object> paymentData = iamportService.getPaymentByImpUid(request.getImpUid());
+            System.out.println("Payment Data: " + paymentData);
+
+            String status = (String) paymentData.get("status");
+            Integer amount = (Integer) paymentData.get("amount");
+
+            if (!"paid".equals(status)) {
+                return ResponseEntity.badRequest().body("후원 결제가 완료되지 않았습니다.");
+            }
+            if (!amount.equals(request.getAmount())) {
+                return ResponseEntity.badRequest().body("결제 금액이 일치하지 않습니다.");
+            }
+
+            donationService.saveDonation(request);
+
+            return ResponseEntity.ok("후원 결제가 성공적으로 저장되었습니다.");
+        } catch (Exception e) {
+            e.printStackTrace();  // 예외 스택트레이스 출력
+            return ResponseEntity.internalServerError().body("결제 검증 중 오류가 생겼습니다.");
+        }
+
     }
 
     /**
