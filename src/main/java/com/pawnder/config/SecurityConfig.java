@@ -1,5 +1,6 @@
 package com.pawnder.config;
 
+import com.pawnder.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,16 +58,15 @@ public class SecurityConfig {
                                 "/api/community/**",
                                 "/api/adopt/**",
                                 "/api/abandoned/**",
-
+                                "/api/pet/**",
                                 "/swagger-ui/**",         // Swagger UI 리소스
                                 "/v3/api-docs/**"         // OpenAPI 문서 경로
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/pet/**").hasRole("USER")
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauthLogin -> oauthLogin
-                        .defaultSuccessUrl("/")
+                        .defaultSuccessUrl("http://localhost:3000")
                         .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig
                                 .userService(customOAuth2UserService))
                 )

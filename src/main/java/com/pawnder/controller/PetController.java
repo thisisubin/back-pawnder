@@ -1,6 +1,5 @@
 package com.pawnder.controller;
 
-import co.elastic.clients.elasticsearch.nodes.Http;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pawnder.config.SessionUtil;
 import com.pawnder.dto.PetProfileDto;
@@ -23,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +34,10 @@ import java.util.Optional;
 @RequestMapping("/api/pet")
 @Tag(name = "Pet", description = "반려견 관련 API")
 public class PetController {
+
     private final PetService petService;
     private final PetRepository petRepository;
+    private final UserService userService;
 
     @Operation(summary = "나의 반려견 등록")
     @PostMapping("/register")
@@ -76,20 +78,48 @@ public class PetController {
 
     @Operation(summary = "나의 반려견 조회")
     @GetMapping("/profile/pets")
-    public ResponseEntity<?> getUserPets(HttpSession session) {
+    public ResponseEntity<?> getUserPets(HttpSession session, Principal principal) {
         try {
-            //SessionUtil 사용
-            String userId = SessionUtil.getLoginUserId(session);
+            System.out.println("✅ /profile/pets 호출됨");
+            System.out.println("세션 ID: " + (session != null ? session.getId() : "세션 없음"));
+            System.out.println("Principal: " + principal);
+
+            String userId = null;
+
+            // 1. 세션에서 사용자 ID 확인 (일반 로그인)
+            userId = SessionUtil.getLoginUserId(session);
+            System.out.println("세션에서 가져온 userId: " + userId);
+
+            // 2. Principal에서 사용자 ID 확인 (소셜 로그인)
+            if (userId == null && principal != null) {
+                userId = principal.getName();
+                System.out.println("Principal에서 가져온 userId: " + userId);
+
+                // 소셜 로그인 사용자의 경우 세션에 사용자 정보 저장
+                try {
+                    User user = userService.findByUserId(userId);
+                    if (user != null) {
+                        SessionUtil.setLoginUser(session, user);
+                        System.out.println("소셜 로그인 사용자 세션 설정 완료: " + userId);
+                    }
+                } catch (Exception e) {
+                    System.out.println("소셜 로그인 사용자 세션 설정 실패: " + e.getMessage());
+                }
+            }
+
             if (userId == null) {
+                System.out.println("사용자 ID를 찾을 수 없음 - 401 반환");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
             }
 
             // 반려견 목록 조회
             List<PetProfileDto> pets = petService.getPetsByUserId(userId);
+            System.out.println("조회된 반려견 수: " + pets.size());
             return ResponseEntity.ok(pets);
 
         } catch (Exception e) {
-            log.error("반려견 조회 중 오류 발생", e);
+            System.out.println("반려견 조회 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("반려견 조회 중 오류가 발생했습니다.");
         }
     }
@@ -126,7 +156,6 @@ public class PetController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }*/
-
     @GetMapping("/{petId}")
     public ResponseEntity<PetProfileDto> getPet(@PathVariable String petId) {
         Pet pet = petRepository.findById(petId)
