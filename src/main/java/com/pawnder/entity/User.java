@@ -16,6 +16,7 @@ import java.util.List;
 @Getter
 @Setter
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,6 +29,10 @@ public class User {
     private String phoneNm;
     private boolean isVerified = false;
 
+    // 소셜 로그인 관련 필드
+    private String provider; // "google", "kakao", "naver" 등
+    private String socialId; // 소셜 서비스에서 제공하는 고유 ID
+
     @Enumerated(EnumType.STRING)
     private Role role;
 
@@ -37,4 +42,20 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<AdoptPet> adoptPetList;
+
+    public User() {
+    } // 기본 생성자
+
+    public User(String name, String email, Role role) {
+        this.name = name;
+        this.email = email;
+        this.role = role;
+    }
+
+    public User update(String name, String email, Role role) {
+        this.name = name;
+        this.email = email;
+        this.role = role;
+        return this;
+    }
 }

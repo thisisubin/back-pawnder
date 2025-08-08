@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final StringRedisTemplate redisTemplate;
@@ -61,8 +62,8 @@ public class UserService implements UserDetailsService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(email);
             message.setSubject("[Pawnder] 이메일 인증 코드");
-            message.setText("인증 코드는 " + code + "입니다. \n" +
-                    CODE_EXPIRY_MINUTES + "분 내에 입력해주세요.");
+            message.setText("인증 코드는 " + code + "입니다. \n"
+                    + CODE_EXPIRY_MINUTES + "분 내에 입력해주세요.");
             javaMailSender.send(message);
 
             log.info("인증 코드 이메일 발송 완료: {}", email);
@@ -134,8 +135,8 @@ public class UserService implements UserDetailsService {
     }
 
     public Optional<User> login(UserLoginDto userLoginDto) {
-        if (userLoginDto == null || !StringUtils.hasText(userLoginDto.getUserId()) ||
-                !StringUtils.hasText(userLoginDto.getPassword())) {
+        if (userLoginDto == null || !StringUtils.hasText(userLoginDto.getUserId())
+                || !StringUtils.hasText(userLoginDto.getPassword())) {
             return Optional.empty();
         }
 
@@ -166,13 +167,18 @@ public class UserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
         User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("해당 사용자를 찾을 수 없습니다. : " + userId));
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + userId));
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUserId())
-                .password(user.getPassword())
-                .roles(user.getRole().toString())
+                .password(user.getPassword() != null ? user.getPassword() : "")
+                .roles(user.getRole().name())
                 .build();
+    }
+
+    // userId로 사용자 찾기
+    public User findByUserId(String userId) {
+        return userRepository.findByUserId(userId).orElse(null);
     }
 
     private String generateVerificationCode() {
