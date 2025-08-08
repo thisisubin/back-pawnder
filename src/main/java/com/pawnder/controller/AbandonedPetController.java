@@ -48,6 +48,7 @@ public class AbandonedPetController {
     private final AbandonedPetFormRepository abandonedPetFormRepository;
     private final CustomVisionService customVisionService;
 
+
     @Operation(summary = "유기동물 제보")
     @PostMapping(value = "/register")
     public ResponseEntity<Map<String, Object>> registerAbandonedPet(
@@ -71,6 +72,7 @@ public class AbandonedPetController {
 
             // 유기견 제보 등록
             abandonPetService.save(abandonPetFormDto, userId, imageurl);
+
 
             response.put("success", true);
             response.put("message", "유기견 등록이 완료되었습니다.");

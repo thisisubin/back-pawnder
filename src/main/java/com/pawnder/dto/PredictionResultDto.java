@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -26,5 +27,4 @@ public class PredictionResultDto {
         private String tagId;
         private String tagName;
     }
-
 }

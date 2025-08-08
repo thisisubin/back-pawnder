@@ -1,9 +1,8 @@
 package com.pawnder.config;
 
-import com.pawnder.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,14 +23,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-@Slf4j
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired
-    private CustomOAuth2UserService customOAuth2UserService;
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -47,46 +44,45 @@ public class SecurityConfig {
                 .and()
                 .csrf().disable()
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(
-                                "/",    //메인
-                                "/api/users/signup",
-                                "/api/users/send-email",
-                                "/api/users/verify-email",
-                                "/api/users/login",
-                                "/api/users/logout",
-                                "/api/users/check-session",
-                                "/api/community/**",
-                                "/api/adopt/**",
-                                "/api/abandoned/**",
-                                "/api/pet/**",
-                                "/swagger-ui/**",         // Swagger UI 리소스
-                                "/v3/api-docs/**"         // OpenAPI 문서 경로
-                        ).permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
-                .oauth2Login(oauthLogin -> oauthLogin
-                        .defaultSuccessUrl("http://localhost:3000")
-                        .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig
-                                .userService(customOAuth2UserService))
+                .requestMatchers(
+                        "/", //메인
+                        "/api/users/signup",
+                        "/api/users/send-email",
+                        "/api/users/verify-email",
+                        "/api/users/login",
+                        "/api/users/logout",
+                        "/api/users/check-session",
+                        "/api/community/**",
+                        "/api/adopt/**",
+                        "/api/abandoned/**",
+                        "/ws/**", // WebSocket 엔드포인트
+                        "/topic/**", // WebSocket 토픽
+                        "/app/**", // WebSocket 애플리케이션 prefix
+
+                        "/swagger-ui/**", // Swagger UI 리소스
+                        "/v3/api-docs/**" // OpenAPI 문서 경로
+                ).permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/pet/**").hasRole("USER")
+                .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                        .maximumSessions(1)
-                        .maxSessionsPreventsLogin(false)
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(false)
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/api/users/logout")
-                        .logoutSuccessHandler((request, response, authentication) -> {
-                            var session = request.getSession(false);
-                            if (session != null) {
-                                log.info("✅ 로그아웃 성공 - 세션 ID: {}", session.getId());
-                                session.invalidate();
-                            }
-                            response.setStatus(200);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"success\": true, \"message\": \"로그아웃 완료\"}");
-                        })
+                .logoutUrl("/api/users/logout")
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    var session = request.getSession(false);
+                    if (session != null) {
+                        log.info("✅ 로그아웃 성공 - 세션 ID: {}", session.getId());
+                        session.invalidate();
+                    }
+                    response.setStatus(200);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"success\": true, \"message\": \"로그아웃 완료\"}");
+                })
                 );
 
         return http.build();

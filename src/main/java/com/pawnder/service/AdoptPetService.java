@@ -26,6 +26,7 @@ public class AdoptPetService {
     private final AbandonedPetRepository abandonedPetRepository;
     private final AbandonedPetFormRepository abandonedPetFormRepository;
     private final AdoptPetRepository adoptPetRepository;
+    private final NotificationService notificationService;
 
     // AdoptPetService
     //유저 -> 입양 신청
@@ -48,6 +49,9 @@ public class AdoptPetService {
         adoptPet.setAdoptStatus(AdoptStatus.REQUESTED);
         adoptPet.setAppliedAt(LocalDateTime.now());
         adoptPetRepository.save(adoptPet);
+
+        //관리자에게 입양 신청했다고 알림
+        notificationService.sendNotification("admin", userId, userId + "님이 유기견 입양 신청했습니다.", "ADOPTION_REQUEST");
     }
 
     //관리자 -> 입양 승인
@@ -69,6 +73,9 @@ public class AdoptPetService {
         form.setStatus(PetStatus.ADOPT);
         adoptPet.setAdoptStatus(AdoptStatus.APPROVED);
         adoptPet.setApprovedAt(LocalDateTime.now());
+
+        //5. 해당 유저에게 입양 신청을 승인했다고 알림
+        notificationService.sendNotification(form.getUser().getUserId(), "admin", "관리자가 입양 신청을 승인했습니다.", "ADOPTION_RESULT");
     }
 
 

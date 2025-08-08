@@ -30,6 +30,7 @@ public class AbandonPetService {
     private final AbandonedPetElasticService abandonedPetElasticService;
     private final FileService fileService;
     private final CustomVisionService customVisionService;
+    private final NotificationService notificationService;
 
 
     //유기동물 제보 form을 제보 DB에 저장하는 메서드 (유저)
@@ -71,6 +72,9 @@ public class AbandonPetService {
             pet.setImageUrl("/images/default-profile.png");
         }
 
+        // 유기견 제보 알림
+        notificationService.sendNotification("admin", userId, pet.getFoundDate()+"에 발견된 유기견 제보가 접수되었습니다.", "ABANDONED_PET");
+
         abandonedPetFormRepository.save(pet);
     }
 
@@ -96,6 +100,9 @@ public class AbandonPetService {
         form.setStatus(PetStatus.PROTECTING);
 
         abandonedPetRepository.save(abandonedPet);
+
+        //유기견 제보를 등록했다고 해당 유저에게 알림 전송
+        notificationService.sendNotification(form.getUser().getUserId(), "admin", "관리자가 유기견 제보를 접수했습니다.", "ADMIN_ALERT");
 
         log.info("유기동물 등록 완료: formId={}, petId={}", formId, abandonedPet.getId());
 
