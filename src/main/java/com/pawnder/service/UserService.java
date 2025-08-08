@@ -5,13 +5,11 @@ import com.pawnder.dto.UserLoginDto;
 import com.pawnder.dto.UserSignUpDto;
 import com.pawnder.entity.User;
 import com.pawnder.repository.UserRepository;
-import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final StringRedisTemplate redisTemplate;
@@ -60,63 +59,18 @@ public class UserService implements UserDetailsService {
 
         // 4. 이메일 전송
         try {
-            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-            String htmlContent = "<!DOCTYPE html>" +
-                    "<html lang='ko'>" +
-                    "<head><meta charset='UTF-8'></head>" +
-                    "<body style='font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;'>" +
-                    "  <table width='100%' cellpadding='0' cellspacing='0' border='0'>" +
-                    "    <tr>" +
-                    "      <td align='center'>" +
-                    "        <table width='480' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 10px; padding: 30px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);'>" +
-                    "          <tr>" +
-                    "            <td align='left' style='padding-bottom: 20px;'>" +
-                    "              <h2 style='margin: 0; font-size: 22px; color: #333;'>🐾 <strong>Pawnder 이메일 인증</strong></h2>" +
-                    "            </td>" +
-                    "          </tr>" +
-                    "          <tr>" +
-                    "            <td style='font-size: 16px; color: #555;'>안녕하세요! 이메일 인증을 위한 코드를 보내드립니다.</td>" +
-                    "          </tr>" +
-                    "          <tr>" +
-                    "            <td align='center' style='padding: 30px 0;'>" +
-                    "              <div style='border: 2px solid #4A90E2; border-radius: 12px; display: inline-block; padding: 20px 40px;'>" +
-                    "                <div style='font-size: 14px; color: #4A90E2; margin-bottom: 8px;'>인증 코드</div>" +
-                    "                <div style='font-size: 36px; font-weight: bold; color: #4A90E2; letter-spacing: 4px;'>" + code + "</div>" +
-                    "              </div>" +
-                    "            </td>" +
-                    "          </tr>" +
-                    "          <tr>" +
-                    "            <td style='font-size: 14px; color: #999;'>" +
-                    "              ⏳ 이 코드는 <strong>" + CODE_EXPIRY_MINUTES + "분</strong> 후 만료됩니다.<br>" +
-                    "              🔒 보안을 위해 타인과 공유하지 마세요." +
-                    "            </td>" +
-                    "          </tr>" +
-                    "          <tr>" +
-                    "            <td align='center' style='padding-top: 30px; font-size: 12px; color: #ccc;'>" +
-                    "              Pawnder - 반려동물 커뮤니티 플랫폼" +
-                    "            </td>" +
-                    "          </tr>" +
-                    "        </table>" +
-                    "      </td>" +
-                    "    </tr>" +
-                    "  </table>" +
-                    "</body>" +
-                    "</html>";
-
-            helper.setTo(email);
-            helper.setSubject("[Pawnder] 이메일 인증 코드");
-            helper.setText(htmlContent, true); // true = HTML
-
-            javaMailSender.send(mimeMessage);
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(email);
+            message.setSubject("[Pawnder] 이메일 인증 코드");
+            message.setText("인증 코드는 " + code + "입니다. \n"
+                    + CODE_EXPIRY_MINUTES + "분 내에 입력해주세요.");
+            javaMailSender.send(message);
 
             log.info("인증 코드 이메일 발송 완료: {}", email);
         } catch (Exception e) {
             log.error("이메일 발송 실패: {}", email, e);
             throw new RuntimeException("이메일 발송에 실패했습니다.");
         }
-
     }
 
     public void verifyCode(String code) {
@@ -181,8 +135,8 @@ public class UserService implements UserDetailsService {
     }
 
     public Optional<User> login(UserLoginDto userLoginDto) {
-        if (userLoginDto == null || !StringUtils.hasText(userLoginDto.getUserId()) ||
-                !StringUtils.hasText(userLoginDto.getPassword())) {
+        if (userLoginDto == null || !StringUtils.hasText(userLoginDto.getUserId())
+                || !StringUtils.hasText(userLoginDto.getPassword())) {
             return Optional.empty();
         }
 
@@ -213,13 +167,18 @@ public class UserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
         User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("해당 사용자를 찾을 수 없습니다. : " + userId));
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + userId));
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUserId())
-                .password(user.getPassword())
-                .roles(user.getRole().toString())
+                .password(user.getPassword() != null ? user.getPassword() : "")
+                .roles(user.getRole().name())
                 .build();
+    }
+
+    // userId로 사용자 찾기
+    public User findByUserId(String userId) {
+        return userRepository.findByUserId(userId).orElse(null);
     }
 
     private String generateVerificationCode() {
