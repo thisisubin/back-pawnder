@@ -23,6 +23,7 @@ public class CommentService {
     private final CommunityPostRepository communityPostRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
+    private final NotificationService notificationService;
 
     //1. Comment 저장 메서드
     public void saveComment(CommentDto commentDto, Long postId, String userId) {
@@ -42,6 +43,9 @@ public class CommentService {
         comment.setContent(commentDto.getContent());
 
         commentRepository.save(comment);
+
+        //1-4. 해당 글 작성자에게 댓글이 달렸다고 알림
+        notificationService.sendNotification(communityPost.getUser().getUserId(), comment.getUser().getUserId(), communityPost.getTitle() + "에 댓글이 달렸습니다.", "COMMENT");
     }
 
     //2. 모든 댓글 GET 메서드

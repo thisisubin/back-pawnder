@@ -6,6 +6,7 @@ import com.pawnder.config.SessionUtil;
 import com.pawnder.dto.CommentDto;
 import com.pawnder.dto.CommunityPostDto;
 import com.pawnder.dto.LikeDto;
+import com.pawnder.dto.LikeToggleResult;
 import com.pawnder.entity.Comment;
 import com.pawnder.entity.User;
 import com.pawnder.repository.LikesRepository;
@@ -41,6 +42,7 @@ import java.util.Map;
 @RequestMapping("/api/community")
 @Tag(name = "Community", description = "커뮤니티 관련 API")
 public class CommunityController {
+
     private final CommunityService communityService;
     private final UserRepository userRepository;
     private final PetRepository petRepository;
@@ -86,7 +88,6 @@ public class CommunityController {
         List<CommunityPostDto> postList = communityService.getAllPosts();
         return ResponseEntity.ok(postList);
     }
-
 
     @Operation(summary = "커뮤니티 상세 조회")
     @GetMapping("/description/{postId}")
@@ -142,6 +143,20 @@ public class CommunityController {
         return ResponseEntity.ok("좋아요 완료");
     }
 
+    @Operation(summary = "좋아요 토글")
+    @PostMapping("/like/{postId}/toggle")
+    public ResponseEntity<?> toggleLike(@PathVariable Long postId, HttpSession session) {
+        try {
+            String userId = SessionUtil.getLoginUserId(session);
+            LikeToggleResult result = likesService.toggleLike(postId, userId);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "좋아요 토글 중 오류가 발생했습니다."));
+        }
+    }
+
     //CommentService
     @Operation(summary = "댓글 달기")
     @PostMapping("/comment/{postId}")
@@ -170,9 +185,17 @@ public class CommunityController {
 
     @Operation(summary = "좋아요 개수 GET")
     @GetMapping("/like/{postId}/count")
-    public ResponseEntity<?> getLikeAll(@PathVariable Long postId) {
-        Long likeCount = likesService.countLike(postId);
-        return ResponseEntity.ok(Map.of("postId", postId, "likeCount", likeCount));
+    public ResponseEntity<?> getLikeAll(@PathVariable Long postId, HttpSession session) {
+        try {
+            String userId = SessionUtil.getLoginUserId(session);
+            Long likeCount = likesService.countLike(postId);
+            boolean isLiked = likesService.isLikedByUser(postId, userId);
+            return ResponseEntity.ok(Map.of("postId", postId, "likeCount", likeCount, "isLiked", isLiked));
+        } catch (Exception e) {
+            // 세션이 없는 경우에도 좋아요 개수는 반환
+            Long likeCount = likesService.countLike(postId);
+            return ResponseEntity.ok(Map.of("postId", postId, "likeCount", likeCount, "isLiked", false));
+        }
     }
 
     @Operation(summary = "게시글 별 모든 댓글 내용 GET")
