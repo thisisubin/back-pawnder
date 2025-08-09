@@ -2,12 +2,13 @@ package com.pawnder.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.pawnder.constant.Role;
-import com.pawnder.dto.UserSignUpDto;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.lang.reflect.Member;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,9 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor // JPA를 위한 기본 생성자 추가
+@AllArgsConstructor // Builder를 위한 모든 필드 생성자 추가
 public class User {
 
     @Id
@@ -42,15 +46,6 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<AdoptPet> adoptPetList;
-
-    public User() {
-    } // 기본 생성자
-
-    public User(String name, String email, Role role) {
-        this.name = name;
-        this.email = email;
-        this.role = role;
-    }
 
     public User update(String name, String email, Role role) {
         this.name = name;

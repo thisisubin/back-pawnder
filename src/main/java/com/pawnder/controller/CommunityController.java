@@ -3,10 +3,7 @@ package com.pawnder.controller;
 import co.elastic.clients.elasticsearch.nodes.Http;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pawnder.config.SessionUtil;
-import com.pawnder.dto.CommentDto;
-import com.pawnder.dto.CommunityPostDto;
-import com.pawnder.dto.LikeDto;
-import com.pawnder.dto.LikeToggleResult;
+import com.pawnder.dto.*;
 import com.pawnder.entity.Comment;
 import com.pawnder.entity.User;
 import com.pawnder.repository.LikesRepository;
@@ -32,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,15 +143,33 @@ public class CommunityController {
 
     @Operation(summary = "좋아요 토글")
     @PostMapping("/like/{postId}/toggle")
-    public ResponseEntity<?> toggleLike(@PathVariable Long postId, HttpSession session) {
+    public ResponseEntity<?> toggleLike(@PathVariable Long postId, HttpSession session, Principal principal) {
         try {
-            String userId = SessionUtil.getLoginUserId(session);
+            String userId = null;
+
+            // Spring Security Principal에서 사용자 ID 가져오기
+            if (principal != null) {
+                userId = principal.getName();
+            }
+
+            // Principal이 없으면 세션에서 가져오기
+            if (userId == null) {
+                userId = SessionUtil.getLoginUserId(session);
+            }
+
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "로그인이 필요합니다."));
+            }
+
+            log.info("좋아요 토글 요청: postId={}, userId={}", postId, userId);
             LikeToggleResult result = likesService.toggleLike(postId, userId);
+            log.info("좋아요 토글 결과: isLiked={}, likeCount={}", result.isLiked(), result.getLikeCount());
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "좋아요 토글 중 오류가 발생했습니다."));
+            log.error("좋아요 토글 오류: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "좋아요 토글 중 오류가 발생했습니다: " + e.getMessage()));
         }
     }
 

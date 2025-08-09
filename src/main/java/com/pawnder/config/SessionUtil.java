@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SessionUtil {
+
     public static void setLoginUser(HttpSession session, User user) {
         session.setAttribute("loginUser", user);
         session.setAttribute("userId", user.getUserId());
@@ -18,7 +19,19 @@ public class SessionUtil {
     }
 
     public static String getLoginUserId(HttpSession session) {
+        // 일반 로그인 사용자
         Object userIdObj = session.getAttribute("userId");
-        return userIdObj instanceof String ? (String) userIdObj : null;
+        if (userIdObj instanceof String) {
+            return (String) userIdObj;
+        }
+
+        // 소셜로그인 사용자
+        Object sessionUserObj = session.getAttribute("user");
+        if (sessionUserObj instanceof com.pawnder.dto.SessionUser) {
+            com.pawnder.dto.SessionUser sessionUser = (com.pawnder.dto.SessionUser) sessionUserObj;
+            return sessionUser.getUserId();
+        }
+
+        return null;
     }
 }

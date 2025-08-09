@@ -2,6 +2,7 @@ package com.pawnder.controller;
 
 import com.pawnder.dto.NotificationDto;
 import com.pawnder.service.NotificationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/notifications")
+@Tag(name = "Notification", description = "웹소캣 알림 관련 API")
 @RequiredArgsConstructor
 public class NotificationController {
 

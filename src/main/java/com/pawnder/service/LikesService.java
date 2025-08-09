@@ -23,12 +23,14 @@ public class LikesService {
     private final CommunityPostRepository communityPostRepository;
     private final UserRepository userRepository;
     private final LikesRepository likesRepository;
-    private final NotificationService notificationService;
 
     // 좋아요 토글 메서드 (좋아요가 없으면 추가, 있으면 삭제)
     public LikeToggleResult toggleLike(Long postId, String userId) {
+        // 사용자 찾기 (일반 로그인 + 소셜로그인)
         User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("로그인된 유저만 좋아요를 누를 수 있습니다."));
+                .orElseGet(() -> userRepository.findByEmail(userId)
+                .orElseGet(() -> userRepository.findBySocialId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("로그인된 유저만 좋아요를 누를 수 있습니다."))));
 
         CommunityPost communityPost = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 글을 찾을 수 없습니다."));
@@ -74,8 +76,6 @@ public class LikesService {
         like.setCommunityPost(communityPost);
 
         likesRepository.save(like);
-        notificationService.sendNotification(userId, like.getUser().getUserId(), like.getCommunityPost().getTitle() + "에 좋아요가 달렸습니다.", "LIKE");
-
         log.info("좋아요 추가: 사용자 {}, 게시글 {}", userId, postId);
     }
 

@@ -26,12 +26,14 @@ import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
 @Tag(name = "User", description = "회원 관련 API")
 public class UserController {
+
     private final UserService userService;
 
     //이메일 인증
@@ -55,8 +57,8 @@ public class UserController {
             summary = "회원가입",
             description = "이름, 아이디, 이메일, 비밀번호, 생년월일로 회원가입을 진행합니다. 전화번호는 현재 필수 입력 값이 아닙니다.",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "회원가입 성공"),
-                    @ApiResponse(responseCode = "400", description = "잘못된 요청")
+                @ApiResponse(responseCode = "200", description = "회원가입 성공"),
+                @ApiResponse(responseCode = "400", description = "잘못된 요청")
             }
     )
     @PostMapping("/signup")
@@ -70,8 +72,8 @@ public class UserController {
             summary = "로그인",
             description = "아이디와 비밀번호로 로그인합니다.",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "로그인 성공!"),
-                    @ApiResponse(responseCode = "400", description = "인증 실패")
+                @ApiResponse(responseCode = "200", description = "로그인 성공!"),
+                @ApiResponse(responseCode = "400", description = "인증 실패")
             }
     )
     @PostMapping("/login")
@@ -85,8 +87,8 @@ public class UserController {
 
             // 인증 처리
             UserDetails userDetails = userService.loadUserByUsername(userLoginDto.getUserId());
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            UsernamePasswordAuthenticationToken authToken
+                    = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
             // SecurityContext 설정
             SecurityContext context = SecurityContextHolder.getContext();
@@ -101,18 +103,17 @@ public class UserController {
         }
     }
 
-
     @Operation(summary = "로그인 여부")
     @GetMapping("/check-session")
     public ResponseEntity<?> checkSession(HttpSession session, Principal principal) {
-        boolean loggedIn = (principal != null); // Spring Security 기준
-        log.info("✅ /check-session 호출됨");
-        log.info("세션 ID: {}", (session != null ? session.getId() : "세션 없음"));
-        log.info("Principal: {}", principal);
-
         Map<String, Object> res = new HashMap<>();
-        res.put("loggedIn", loggedIn);
-        res.put("username", loggedIn ? principal.getName() : null);
+        res.put("loggedIn", principal != null);
+
+        if (principal != null) {
+            res.put("userId", principal.getName());
+            res.put("username", principal.getName());
+            res.put("userName", principal.getName());
+        }
 
         return ResponseEntity.ok(res);
     }
