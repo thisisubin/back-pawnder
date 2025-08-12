@@ -60,7 +60,10 @@ jobs:
             docker stop myapp redis-container elasticsearch-container mysql-container || true
             docker rm myapp redis-container elasticsearch-container mysql-container || true
 
-            # 2. 필요한 볼륨 생성
+            docker volume rm mysql-data
+          
+
+          # 2. 필요한 볼륨 생성
             docker volume create redis-data || true
             docker volume create es-data || true
             docker volume create mysql-data || true
