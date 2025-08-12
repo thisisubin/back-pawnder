@@ -50,7 +50,7 @@ jobs:
         with:
             host: ${{ env.EC2_HOST }}
             username: ubuntu
-            key: ${{ env.EC2_SSH_KEY }}
+            key: /home/ubuntu/.ssh/authorized_keys
             script: |
               cd ~/app
               
