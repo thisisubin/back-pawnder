@@ -48,25 +48,27 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           script: |
             cd ~/app
-            
+
             docker network create my-network || true
 
-            docker build -t myapp:latest . || (echo "Docker build failed!" && exit 1)
-
+            # 1. 기존 컨테이너 종료 및 삭제 (myapp, redis, es, mysql)
             docker stop myapp redis-container elasticsearch-container mysql-container || true
             docker rm myapp redis-container elasticsearch-container mysql-container || true
 
+            # 2. 필요한 볼륨 생성
             docker volume create redis-data || true
+            docker volume create es-data || true
+            docker volume create mysql-data || true
+
+            # 3. Redis, Elasticsearch, MySQL 먼저 실행
             docker run -d --name redis-container --network my-network -p 6379:6379 -v redis-data:/data redis:7.0
 
-            docker volume create es-data || true
             docker run -d --name elasticsearch-container --network my-network -p 9200:9200 -p 9300:9300 \
               -e "discovery.type=single-node" \
               -e "xpack.security.enabled=false" \
               -v es-data:/usr/share/elasticsearch/data \
               docker.elastic.co/elasticsearch/elasticsearch:8.9.0
 
-            docker volume create mysql-data || true
             docker run -d --name mysql-container --network my-network -p 3306:3306 \
               -e MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} \
               -e MYSQL_DATABASE=${MYSQL_DATABASE} \
@@ -74,3 +76,15 @@ jobs:
               -e MYSQL_PASSWORD=${MYSQL_ROOT_PASSWORD} \
               -v mysql-data:/var/lib/mysql \
               mysql:8.0
+
+            # 4. 애플리케이션 빌드
+            docker build -t myapp:latest . || (echo "Docker build failed!" && exit 1)
+
+            # 5. 애플리케이션 컨테이너 실행
+            docker run -d --name myapp --network my-network -p 8080:8080 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql-container:3306/${MYSQL_DATABASE} \
+              -e SPRING_DATASOURCE_USERNAME=${MYSQL_USER} \
+              -e SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD} \
+              -e SPRING_REDIS_HOST=redis-container \
+              myapp:latest
