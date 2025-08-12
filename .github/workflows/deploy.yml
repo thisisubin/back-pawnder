@@ -28,7 +28,7 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      # Step to find the JAR file and set it as an environment variable
+      # Find the JAR file and set it as an environment variable
       - name: Set JAR filename
         id: set_jar
         run: |
@@ -43,16 +43,22 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           # Upload the JAR file, Dockerfile, and deploy.yml
           source: "${{ env.JAR_FILE }},Dockerfile,deploy.yml"
-          target: "~/app"
+          target: "~/app"\
 
       - name: SSH into EC2 and build & run Docker containers
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ env.EC2_HOST }}
-          username: ubuntu
-          key: ${{ env.EC2_SSH_KEY }}
-          script: |
-            # Efficient SSH script for appleboy/ssh-action
-            cd ~/app
-            docker-compose down || true
-            docker-compose up --build -d
+            host: ${{ env.EC2_HOST }}
+            username: ubuntu
+            key: ${{ env.EC2_SSH_KEY }}
+            script: |
+              # Navigate to the application directory
+              cd ~/app
+              
+              # Gracefully stop and remove all existing containers and networks
+              # The '|| true' ensures the script doesn't fail on the first run
+              docker-compose down || true
+              
+              # Build and run all services in detached mode
+              docker-compose up --build -d
+
