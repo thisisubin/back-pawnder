@@ -52,19 +52,12 @@ jobs:
           username: ubuntu
           key: ${{ env.EC2_SSH_KEY }}
           script: |
-            # Corrected SSH script for appleboy/ssh-action
+            # Efficient SSH script for appleboy/ssh-action
             cd ~/app
             
-            # 1. Stop and remove the old 'myapp' container
-            # The '|| true' allows the command to fail without stopping the script if the container doesn't exist
-            docker stop myapp || true
-            docker rm myapp || true
+            # 1. Gracefully stop and remove all containers, networks, and volumes defined in docker-compose.yml
+            # This single command handles all cleanup.
+            docker-compose down
             
-            # 2. Stop and remove the other containers
-            docker-compose down || true
-            
-            # 3. Clean up the 'myapp' image to ensure a fresh build
-            docker rmi myapp:latest || true
-            
-            # 4. Now, build and run all services
+            # 2. Build and run all services again. The '--build' flag ensures the 'myapp' image is rebuilt.
             docker-compose up --build -d
