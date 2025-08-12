@@ -47,6 +47,10 @@ jobs:
           username: ubuntu
           key: ${{ env.EC2_SSH_KEY }}
           script: |
+            MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD }}"
+            MYSQL_DATABASE="${{ secrets.MYSQL_DATABASE }}"
+            MYSQL_USER="${{ secrets.MYSQL_USER }}"
+                    
             cd ~/app
 
             # 1. 기존 컨테이너 종료 및 삭제 (myapp, redis, es, mysql)
@@ -67,23 +71,22 @@ jobs:
               -e "xpack.security.enabled=false" \
               -v es-data:/usr/share/elasticsearch/data \
               docker.elastic.co/elasticsearch/elasticsearch:8.9.0
-  
+                    
             docker run -d --name mysql-container --network my-network -p 3306:3306 \
-              -e MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} \
-              -e MYSQL_DATABASE=${MYSQL_DATABASE} \
-              -e MYSQL_USER=${MYSQL_USER} \
-              -e MYSQL_PASSWORD=${MYSQL_ROOT_PASSWORD} \
+              -e MYSQL_ROOT_PASSWORD="$MYSQL_ROOT_PASSWORD" \
+              -e MYSQL_DATABASE="$MYSQL_DATABASE" \
+              -e MYSQL_USER="$MYSQL_USER" \
+              -e MYSQL_PASSWORD="$MYSQL_ROOT_PASSWORD" \
               -v mysql-data:/var/lib/mysql \
               mysql:8.0
-
-            # 4. 애플리케이션 빌드
+                    
             docker build -t myapp:latest . || (echo "Docker build failed!" && exit 1)
-
-            # 5. 애플리케이션 컨테이너 실행
+                    
             docker run -d --name myapp --network my-network -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
-              -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql-container:3306/${MYSQL_DATABASE} \
-              -e SPRING_DATASOURCE_USERNAME=${MYSQL_USER} \
-              -e SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD} \
+              -e SPRING_DATASOURCE_URL="jdbc:mysql://mysql-container:3306/$MYSQL_DATABASE" \
+              -e SPRING_DATASOURCE_USERNAME="$MYSQL_USER" \
+              -e SPRING_DATASOURCE_PASSWORD="$MYSQL_ROOT_PASSWORD" \
               -e SPRING_REDIS_HOST=redis-container \
               myapp:latest
+
