@@ -28,6 +28,16 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
+      - name: Upload source code to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ubuntu
+          key: ${{ env.EC2_SSH_KEY }}
+          source: |
+            Dockerfile
+            target/pawnder-0.0.1-SNAPSHOT.jar
+          target: "~/app"
 
       - name: SSH into EC2 and build & run Docker containers
         uses: appleboy/ssh-action@master
@@ -38,19 +48,14 @@ jobs:
           script: |
             cd ~/app
 
-            # Build Spring Boot Docker image
-            docker build -t myapp:latest .
+            docker build -t myapp:latest . || (echo "Docker build failed!" && exit 1)
 
-            # Stop and remove old containers if exist
             docker stop myapp redis-container elasticsearch-container || true
             docker rm myapp redis-container elasticsearch-container || true
 
-            # Run Redis container (with persistent volume)
             docker volume create redis-data || true
-            docker run -d --name redis-container -p 6379:6379 \
-              -v redis-data:/data redis:7.0
+            docker run -d --name redis-container -p 6379:6379 -v redis-data:/data redis:7.0
 
-            # Run Elasticsearch container (single node, disable security for dev)
             docker volume create es-data || true
             docker run -d --name elasticsearch-container -p 9200:9200 -p 9300:9300 \
               -e "discovery.type=single-node" \
@@ -58,7 +63,6 @@ jobs:
               -v es-data:/usr/share/elasticsearch/data \
               docker.elastic.co/elasticsearch/elasticsearch:8.9.0
 
-            # Run Spring Boot app container with env variables
             docker run -d --name myapp -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE} \
