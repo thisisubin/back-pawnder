@@ -42,7 +42,6 @@ build/
 *.iml
 
 # Maven
-target/
 .mvn/
 
 # 환경 변수 파일
