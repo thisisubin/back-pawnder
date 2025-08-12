@@ -49,8 +49,8 @@ jobs:
       - name: Create SSH key file on runner
         run: |
             mkdir -p ~/.ssh
-            echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-            chmod 600 ~/.ssh/id_rsa
+            echo "${{ secrets.EC2_SSH_KEY }}" > /home/ubuntu/.ssh/authorized_keys
+            chmod 600 /home/ubuntu/.ssh/authorized_keys
 
       - name: SSH into EC2 and build & run Docker containers
         uses: appleboy/ssh-action@master
