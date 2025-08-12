@@ -37,7 +37,7 @@ jobs:
           host: ${{ env.EC2_HOST }}
           username: ubuntu
           key: ${{ env.EC2_SSH_KEY }}
-          source:
+          source: |
             - Dockerfile
             - target/*.jar
           target: "~/app"
