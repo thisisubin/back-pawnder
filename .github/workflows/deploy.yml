@@ -52,13 +52,9 @@ jobs:
             username: ubuntu
             key: ${{ env.EC2_SSH_KEY }}
             script: |
-              # Navigate to the application directory
               cd ~/app
               
-              # Gracefully stop and remove all existing containers and networks
-              # The '|| true' ensures the script doesn't fail on the first run
               docker-compose down || true
               
-              # Build and run all services in detached mode
               docker-compose up --build -d
 
