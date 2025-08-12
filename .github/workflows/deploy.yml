@@ -48,16 +48,15 @@ jobs:
       # --- 이 부분이 새롭게 추가되었습니다. ---
       - name: Create SSH key file on runner
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_KEY }}" > Pawnder.pem
+          chmod 600 Pawnder.pem
 
       - name: SSH into EC2 and build & run Docker containers
         uses: appleboy/ssh-action@master
         with:
             host: ${{ env.EC2_HOST }}
             username: ubuntu
-            key: ~/.ssh/id_rsa
+            key: Pawnder.pem
             script: |
               cd ~/app
               
