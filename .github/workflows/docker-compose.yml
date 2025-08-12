@@ -51,8 +51,8 @@ jobs:
 
             docker build -t myapp:latest . || (echo "Docker build failed!" && exit 1)
 
-            docker stop myapp redis-container elasticsearch-container || true
-            docker rm myapp redis-container elasticsearch-container || true
+            docker stop myapp redis-container elasticsearch-container mysql-container || true
+            docker rm myapp redis-container elasticsearch-container mysql-container || true
 
             docker volume create redis-data || true
             docker run -d --name redis-container --network my-network -p 6379:6379 -v redis-data:/data redis:7.0
