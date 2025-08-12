@@ -68,7 +68,7 @@ jobs:
               -e "xpack.security.enabled=false" \
               -v es-data:/usr/share/elasticsearch/data \
               docker.elastic.co/elasticsearch/elasticsearch:8.9.0
-
+  
             docker run -d --name mysql-container --network my-network -p 3306:3306 \
               -e MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} \
               -e MYSQL_DATABASE=${MYSQL_DATABASE} \
