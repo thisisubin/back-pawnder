@@ -54,10 +54,5 @@ jobs:
           script: |
             # Efficient SSH script for appleboy/ssh-action
             cd ~/app
-            
-            # 1. Gracefully stop and remove all containers, networks, and volumes defined in docker-compose.yml
-            # This single command handles all cleanup.
-            docker-compose down
-            
-            # 2. Build and run all services again. The '--build' flag ensures the 'myapp' image is rebuilt.
+            docker-compose down || true
             docker-compose up --build -d
