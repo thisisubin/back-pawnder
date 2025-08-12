@@ -2,7 +2,7 @@ version: '3.8'
 services:
   myapp:
     build: .
-    container_name: myapp
+    container_name: pawnder
     ports:
       - "8080:8080"
     environment:
@@ -56,7 +56,7 @@ services:
       - mysql-data:/var/lib/mysql
     networks:
       - my-network
-
+      -
 volumes:
   redis-data:
   es-data:
