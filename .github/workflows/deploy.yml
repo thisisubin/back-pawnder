@@ -30,7 +30,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
-          key_path: private_key.pem
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/app
             sudo docker-compose down || true
