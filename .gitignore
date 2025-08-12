@@ -57,3 +57,5 @@ test.jpg
 
 # OS/에디터별 불필요 파일
 Thumbs.db
+
+application-dev.properties

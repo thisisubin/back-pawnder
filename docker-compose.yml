@@ -1,0 +1,43 @@
+name: Deploy Dockerized Spring Boot to EC2 (No Docker Hub)
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+  MYSQL_USER: ${{ secrets.MYSQL_USER }}
+  MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+  EC2_HOST: ${{ secrets.EC2_HOST }}
+  EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Upload source code to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ubuntu
+          key: ${{ env.EC2_SSH_KEY }}
+          source: "."                  # 프로젝트 전체 또는 Dockerfile + 소스만
+          target: "~/app"
+
+      - name: SSH into EC2 and build & run Docker container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ubuntu
+          key: ${{ env.EC2_SSH_KEY }}
+          script: |
+            cd ~/app
+            docker build -t myapp:latest .
+            docker stop myapp || true
+            docker rm myapp || true
+            docker run -d --name myapp -p 8080:8080 myapp:latest --spring.profiles.active=prod
+

@@ -1,5 +1,6 @@
 package com.pawnder.controller;
 
+import com.pawnder.config.DashboardSocketIOHandler;
 import com.pawnder.config.SessionUtil;
 import com.pawnder.dto.UserLoginDto;
 import com.pawnder.dto.UserSignUpDto;
@@ -8,13 +9,10 @@ import com.pawnder.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.mail.Session;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.OptimisticLock;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
@@ -35,6 +33,7 @@ import java.util.Optional;
 public class UserController {
 
     private final UserService userService;
+    private final DashboardSocketIOHandler dashboardSocketIOHandler;
 
     //이메일 인증
     @Operation(summary = "이메일 인증")
@@ -64,6 +63,11 @@ public class UserController {
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody UserSignUpDto userSignUpDto) {
         userService.signUp(userSignUpDto);
+
+        // 실시간 대시보드 업데이트 - 새 사용자 등록
+        dashboardSocketIOHandler.broadcastDashboardUpdate("user_registered",
+                Map.of("message", "새로운 사용자가 등록되었습니다.", "userId", userSignUpDto.getUserId()));
+
         return ResponseEntity.ok("회원가입 성공!");
     }
 
@@ -110,9 +114,21 @@ public class UserController {
         res.put("loggedIn", principal != null);
 
         if (principal != null) {
+
+            User user = userService.findByUserId(principal.getName());
+
             res.put("userId", principal.getName());
             res.put("username", principal.getName());
             res.put("userName", principal.getName());
+
+            // MyPage에서 필요한 추가 정보
+            if (user != null) {
+                res.put("name", user.getName());           // 실제 이름
+                res.put("email", user.getEmail());         // 이메일
+                res.put("birth", user.getBirth());         // 생년월일
+                res.put("phoneNm", user.getPhoneNm());     // 전화번호
+                res.put("role", user.getRole());           // 역할 (관리자/일반)
+            }
         }
 
         return ResponseEntity.ok(res);

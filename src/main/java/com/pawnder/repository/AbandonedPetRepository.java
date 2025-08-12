@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface AbandonedPetRepository extends JpaRepository<AbandonedPet, Long> {
     List<AbandonedPet> findByStatus(PetStatus status);
 
+    long countByStatus(PetStatus status);
 
     Optional<AbandonedPet> findByAbandonedPetForm_Id(Long abandonedPetFormId);
 

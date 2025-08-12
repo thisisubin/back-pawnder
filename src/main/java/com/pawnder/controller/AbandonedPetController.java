@@ -5,6 +5,7 @@ import com.pawnder.config.SessionUtil;
 import com.pawnder.constant.PetStatus;
 import com.pawnder.dto.AbandonPetFormDto;
 import com.pawnder.dto.DonationVerifyRequest;
+import com.pawnder.dto.MyDonationDto;
 import com.pawnder.dto.PetProfileDto;
 import com.pawnder.entity.*;
 import com.pawnder.repository.AbandonedPetFormRepository;
@@ -47,6 +48,7 @@ public class AbandonedPetController {
     private final AbandonedPetSearchService abandonedPetSearchService;
     private final AbandonedPetFormRepository abandonedPetFormRepository;
     private final CustomVisionService customVisionService;
+
 
 
     @Operation(summary = "유기동물 제보")
@@ -148,6 +150,19 @@ public class AbandonedPetController {
             return ResponseEntity.internalServerError().body("결제 검증 중 오류가 생겼습니다.");
         }
 
+    }
+
+    @Operation(summary = "나의 후원내역")
+    @GetMapping("/donation/my-donations")
+    public ResponseEntity<?> myDonations(HttpSession session) {
+        try {
+            String userName = SessionUtil.getLoginUserId(session);
+            List<MyDonationDto> donations = donationRepository.findMyDonationsWithPet(userName);
+            return ResponseEntity.ok(donations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("후원내역 조회 중 오류가 생겼습니다.");
+        }
     }
 
     /**

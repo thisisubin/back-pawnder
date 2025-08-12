@@ -1,10 +1,13 @@
 package com.pawnder.controller;
 
 import com.pawnder.config.SessionUtil;
+import com.pawnder.config.DashboardSocketIOHandler;
 import com.pawnder.constant.Role;
 import com.pawnder.dto.AbandonPetFormDto;
 import com.pawnder.dto.AdoptPetDto;
-import com.pawnder.entity.AbandonedPet;
+import com.pawnder.dto.dashboard.AbandonedStatusResponse;
+import com.pawnder.dto.dashboard.ApplyStatsResponse;
+import com.pawnder.dto.dashboard.DonationStatsResponse;
 import com.pawnder.entity.AbandonedPetForm;
 import com.pawnder.entity.AdoptPet;
 import com.pawnder.entity.User;
@@ -12,22 +15,20 @@ import com.pawnder.repository.AbandonedPetFormRepository;
 import com.pawnder.repository.AdoptPetRepository;
 import com.pawnder.service.AbandonPetService;
 import com.pawnder.service.AdoptPetService;
+import com.pawnder.service.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @Slf4j
 @RestController
@@ -40,6 +41,8 @@ public class AdminController {
     private final AbandonedPetFormRepository abandonedPetFormRepository;
     private final AdoptPetService adoptPetService;
     private final AdoptPetRepository adoptPetRepository;
+    private final DashboardService dashboardService;
+    private final DashboardSocketIOHandler dashboardSocketIOHandler;
 
     @Operation(summary = "유기동물 제보 등록 (관리자만)")
     @PostMapping("/reports/{id}/register")
@@ -56,6 +59,11 @@ public class AdminController {
 
         try {
             abandonPetService.registerAsAbandonedPet(id);
+
+            // 실시간 대시보드 업데이트
+            dashboardSocketIOHandler.broadcastDashboardUpdate("dashboard_update",
+                    Map.of("type", "pet_registered", "message", "새로운 유기동물이 등록되었습니다."));
+
             return ResponseEntity.ok("제보가 유기동물로 등록되었습니다.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("등록 중 오류 발생: " + e.getMessage());
@@ -103,9 +111,42 @@ public class AdminController {
     @Operation(summary = "유기견 입양 승인")
     @PostMapping("/adopt/approve/{id}")
     public ResponseEntity<?> approveAdoption(@PathVariable Long id) {
-        adoptPetService.approveAdoption(id);
-        return ResponseEntity.ok("승인됨");
+        try {
+            adoptPetService.approveAdoption(id);
+
+            // 실시간 대시보드 업데이트
+            dashboardSocketIOHandler.broadcastDashboardUpdate("dashboard_update",
+                    Map.of("type", "adoption_approved", "message", "입양이 승인되었습니다."));
+
+            return ResponseEntity.ok("입양이 승인되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("승인 중 오류 발생: " + e.getMessage());
+        }
     }
 
-}
 
+    /* 관리자 대시보드 영역 */
+    @Operation(summary = "유기견 수 변화 통계")
+    @GetMapping("/dashboard/abandoned-status")
+    public ResponseEntity<?> dashPet() {
+        // LOST, PROTECTING, WAITING, ADOPT 상태별 수량 리턴
+        AbandonedStatusResponse response = dashboardService.getAbandonedPetStatus();
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "후원금 누적치")
+    @GetMapping("/dashboard/donations")
+    public ResponseEntity<?> totalAmount() {
+        // 후원금 총액, 월별 추이 등
+        DonationStatsResponse response = dashboardService.getDonationStats();
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "유기견 제보/입양 처리 현황")
+    @GetMapping("/dashboard/reports-adoptions")
+    public ResponseEntity<ApplyStatsResponse> dashApply() {
+        // 제보 수 vs 입양 신청 수
+        ApplyStatsResponse response = dashboardService.getApplicationStats();
+        return ResponseEntity.ok(response);
+    }
+}

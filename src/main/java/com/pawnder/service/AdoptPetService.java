@@ -27,6 +27,7 @@ public class AdoptPetService {
     private final AbandonedPetFormRepository abandonedPetFormRepository;
     private final AdoptPetRepository adoptPetRepository;
     private final NotificationService notificationService;
+    private final SmsService smsService;
 
     // AdoptPetService
     //유저 -> 입양 신청
@@ -76,6 +77,10 @@ public class AdoptPetService {
 
         //5. 해당 유저에게 입양 신청을 승인했다고 알림
         notificationService.sendNotification(form.getUser().getUserId(), "admin", "관리자가 입양 신청을 승인했습니다.", "ADOPTION_RESULT");
+
+        //6. 해당 유저에게 입양 신청을 승인했다고 sms
+        smsService.sendSMS(form.getUser().getPhoneNm(), "[Pawnder] 관리자가 입양 신청을 승인했습니다.");
+
     }
 
 

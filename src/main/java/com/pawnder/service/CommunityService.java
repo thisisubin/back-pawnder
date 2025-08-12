@@ -1,8 +1,12 @@
 package com.pawnder.service;
 
+import com.pawnder.constant.AdoptStatus;
+import com.pawnder.constant.PetStatus;
 import com.pawnder.dto.CommunityPostDto;
 import com.pawnder.entity.CommunityPost;
 import com.pawnder.entity.User;
+import com.pawnder.repository.AbandonedPetFormRepository;
+import com.pawnder.repository.AdoptPetRepository;
 import com.pawnder.repository.CommunityPostRepository;
 import com.pawnder.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,14 +28,46 @@ public class CommunityService {
     private final UserRepository userRepository;
     private final FileService fileService;
     private final CommunityPostRepository communityPostRepository;
+    private final AbandonedPetFormRepository abandonedPetFormRepository;
+    private final AdoptPetRepository adoptPetRepository;
+
     //1. 타입별로 글 포스트(저장) 하는 메서드 form -> DB
     public void savePost(CommunityPostDto communityPostDto, String userId, MultipartFile ImgUrlContent) throws IOException {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
 
+
+        switch (communityPostDto.getPostType()) {
+            case SHOW_OFF : //유저가 반려동물 프로필을 등록한 상태인지 확인
+                if (user.getPets().isEmpty()) {
+                    throw new IllegalArgumentException("반려동물 등록 후 작성할 수 있습니다.");
+                }
+                break;
+            case TEMP_PROTECT: //입양 홍보글 -> 유저의 유기견 제보가 등록된 상태 || 유저가 관리자
+                boolean isAdmin = "admin".equals(user.getUserId());
+                boolean hasApproveReport = abandonedPetFormRepository
+                        .findByUserUserIdAndStatus(userId, PetStatus.PROTECTING)
+                        .isPresent();
+                if (!isAdmin && !hasApproveReport){
+                    throw new IllegalArgumentException("유기견의 제보를 승인받은 후 작성할 수 있습니다.");
+                }
+                break;
+            case REVIEW: //입양한 유기견이 있는 경우 -> 유저가 입양승인을 받은 상태
+                boolean hasAdoptedPet = adoptPetRepository
+                        .findByUserUserIdAndAdoptStatus(userId, AdoptStatus.APPROVED)
+                        .isPresent();
+                if (!hasAdoptedPet) {
+                    throw new IllegalArgumentException("입양 승인을 받은 후 작성하실 수 있습니다.");
+                }
+                //입양 승인을 받은 상태
+                break;
+
+        }
+
+        //게시글 작성
+
         CommunityPost communityPost = new CommunityPost();
         communityPost.setPostType(communityPostDto.getPostType());
-        communityPost.setId(communityPostDto.getId());
         communityPost.setTitle(communityPostDto.getTitle());
         communityPost.setUser(user);
         communityPost.setStrContent(communityPostDto.getStrContent());
@@ -41,23 +77,6 @@ public class CommunityService {
         // S3에 이미지 업로드
         // String imagUrl - S3Service. ~~~~
 
-        //유저가 반려동물 프로필을 등록한 상태인지 확인 -> 카테고리에 반려동물 자랑하기만 보여야 함
-        switch (communityPostDto.getPostType()) {
-            case SHOW_OFF :
-                if (user.getPets().isEmpty()) {
-                throw new IllegalArgumentException("반려동물 등록 후 작성할 수 있습니다.");
-            }
-            case TEMP_PROTECT:
-                if(user.getRole().equals("ADMIN")
-                        //|| 임시보호 승인 상태
-                ){
-                    throw new IllegalArgumentException("임시보호를 승인받은 후 작성할 수 있습니다.");
-                }
-            case REVIEW:
-                //입양 승인을 받은 상태
-        }
-        //유저가 임시보호 등록한 상태 || 유저가 관리자인지 확인 -> 카테고리에 입양 홍보만 보여야 함
-        //유저가 입양승인을 받은 상태 -> 카테고리에 입양 후기만 보여야함
 
 
         //게시글 이미지 처리

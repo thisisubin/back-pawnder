@@ -31,6 +31,7 @@ public class AbandonPetService {
     private final FileService fileService;
     private final CustomVisionService customVisionService;
     private final NotificationService notificationService;
+    private final SmsService smsService;
 
 
     //유기동물 제보 form을 제보 DB에 저장하는 메서드 (유저)
@@ -103,6 +104,8 @@ public class AbandonPetService {
 
         //유기견 제보를 등록했다고 해당 유저에게 알림 전송
         notificationService.sendNotification(form.getUser().getUserId(), "admin", "관리자가 유기견 제보를 접수했습니다.", "ADMIN_ALERT");
+
+        smsService.sendSMS(form.getUser().getPhoneNm(), "[Pawnder] 관리자가 유기견 제보를 접수했습니다.");
 
         log.info("유기동물 등록 완료: formId={}, petId={}", formId, abandonedPet.getId());
 
