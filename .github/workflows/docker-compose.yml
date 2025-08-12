@@ -38,8 +38,8 @@ jobs:
           username: ubuntu
           key: ${{ env.EC2_SSH_KEY }}
           source: |
-            - Dockerfile
-            - target/*.jar
+            Dockerfile
+            target/***-0.0.1-SNAPSHOT.jar
           target: "~/app"
 
       - name: SSH into EC2 and build & run Docker containers
