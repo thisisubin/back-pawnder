@@ -28,15 +28,18 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
+      - name: List target directory
+        run: ls -l target/
+
       - name: Upload source code to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ env.EC2_HOST }}
           username: ubuntu
           key: ${{ env.EC2_SSH_KEY }}
-          source: |
-            Dockerfile
-            target/*.jar
+          source:
+            - Dockerfile
+            - target/*.jar
           target: "~/app"
 
       - name: SSH into EC2 and build & run Docker containers
