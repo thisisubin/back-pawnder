@@ -53,7 +53,7 @@ jobs:
                     
             cd ~/app
 
-            # 1. 기존 컨테이너 종료 및 삭제 (myapp, redis, es, mysql)
+          # 1. 기존 컨테이너 종료 및 삭제 (myapp, redis, es, mysql)
             docker stop myapp redis-container elasticsearch-container mysql-container || true
             docker rm myapp redis-container elasticsearch-container mysql-container || true
           
