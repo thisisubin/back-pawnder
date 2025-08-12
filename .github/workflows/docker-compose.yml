@@ -19,6 +19,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
       - name: Upload source code to EC2
         uses: appleboy/scp-action@master
         with:
