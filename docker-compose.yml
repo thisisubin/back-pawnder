@@ -36,8 +36,25 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           script: |
             cd ~/app
+      
+            # Build Spring Boot app Docker image
             docker build -t myapp:latest .
+      
+            # Stop and remove 기존 컨테이너 (오류 무시)
             docker stop myapp || true
             docker rm myapp || true
+            docker stop redis-container || true
+            docker rm redis-container || true
+            docker stop elasticsearch-container || true
+            docker rm elasticsearch-container || true
+            
+            # Redis 컨테이너 실행 (필요시 볼륨 추가)
+            docker run -d --name redis-container -p 6379:6379 redis:7.0
+      
+      
+            # Elasticsearch 컨테이너 실행 (필요한 설정 추가 가능)
+            docker run -d --name elasticsearch-container -p 9200:9200 -p 9300:9300 \
+            -e "discovery.type=single-node" \
+            docker.elastic.co/elasticsearch/elasticsearch:8.9.0
             docker run -d --name myapp -p 8080:8080 myapp:latest --spring.profiles.active=prod
 
