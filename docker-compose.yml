@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   myapp:
-    build: .github/workflows
+    build: .
     container_name: myapp
     ports:
       - "8080:8080"
