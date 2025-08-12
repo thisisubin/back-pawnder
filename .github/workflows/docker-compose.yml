@@ -49,7 +49,7 @@ jobs:
           script: |
             cd ~/app
 
-            docker network create my-network || true
+            docker network create my-network || true 
 
             # 1. 기존 컨테이너 종료 및 삭제 (myapp, redis, es, mysql)
             docker stop myapp redis-container elasticsearch-container mysql-container || true
