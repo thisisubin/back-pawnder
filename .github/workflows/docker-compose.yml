@@ -1,92 +1,67 @@
-name: Deploy Dockerized Spring Boot to EC2 (No Docker Hub)
+version: '3.8'
+services:
+  myapp:
+    build: .
+    container_name: myapp
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-container:3306/${MYSQL_DATABASE}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      SPRING_REDIS_HOST: redis-container
+    depends_on:
+      - mysql-container
+      - redis-container
+      - elasticsearch-container
+    networks:
+      - my-network
 
-on:
-  push:
-    branches:
-      - main
+  redis-container:
+    image: redis:7.0
+    container_name: redis-container
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - my-network
 
-env:
-  MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-  MYSQL_USER: ${{ secrets.MYSQL_USER }}
-  MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
-  EC2_HOST: ${{ secrets.EC2_HOST }}
-  EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+  elasticsearch-container:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
+    container_name: elasticsearch-container
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    networks:
+      - my-network
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  mysql-container:
+    image: mysql:8.0
+    container_name: mysql-container
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - my-network
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v3
-        with:
-          java-version: '21'
-          distribution: 'temurin'
+volumes:
+  redis-data:
+  es-data:
+  mysql-data:
 
-      - name: Build with Maven
-        run: mvn clean package -DskipTests
-
-      - name: List target directory
-        run: ls -l target/
-
-      - name: Upload source code to EC2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ env.EC2_HOST }}
-          username: ubuntu
-          key: ${{ env.EC2_SSH_KEY }}
-          source: "target/***-0.0.1-SNAPSHOT.jar"
-          target: "~/app"
-
-      - name: SSH into EC2 and build & run Docker containers
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.EC2_HOST }}
-          username: ubuntu
-          key: ${{ env.EC2_SSH_KEY }}
-          script: |
-            MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD }}"
-            MYSQL_DATABASE="${{ secrets.MYSQL_DATABASE }}"
-            MYSQL_USER="${{ secrets.MYSQL_USER }}"
-                    
-            cd ~/app
-
-          # 1. 기존 컨테이너 종료 및 삭제 (myapp, redis, es, mysql)
-            docker stop myapp redis-container elasticsearch-container mysql-container || true
-            docker rm myapp redis-container elasticsearch-container mysql-container || true
-          
-
-          # 2. 필요한 볼륨 생성
-            docker volume create redis-data || true
-            docker volume create es-data || true
-            docker volume create mysql-data || true
-
-            # 3. Redis, Elasticsearch, MySQL 먼저 실행
-            docker run -d --name redis-container --network my-network -p 6379:6379 -v redis-data:/data redis:7.0
-   
-            docker run -d --name elasticsearch-container --network my-network -p 9200:9200 -p 9300:9300 \
-              -e "discovery.type=single-node" \
-              -e "xpack.security.enabled=false" \
-              -v es-data:/usr/share/elasticsearch/data \
-              docker.elastic.co/elasticsearch/elasticsearch:8.9.0
-                    
-            docker run -d --name mysql-container --network my-network -p 3306:3306 \
-              -e MYSQL_ROOT_PASSWORD="$MYSQL_ROOT_PASSWORD" \
-              -e MYSQL_DATABASE="$MYSQL_DATABASE" \
-              -e MYSQL_USER="$MYSQL_USER" \
-              -e MYSQL_PASSWORD="$MYSQL_ROOT_PASSWORD" \
-              -v mysql-data:/var/lib/mysql \
-              mysql:8.0
-                    
-            docker build -t myapp:latest . || (echo "Docker build failed!" && exit 1)
-                    
-            docker run -d --name myapp --network my-network -p 8080:8080 \
-              -e SPRING_PROFILES_ACTIVE=prod \
-              -e SPRING_DATASOURCE_URL="jdbc:mysql://mysql-container:3306/$MYSQL_DATABASE" \
-              -e SPRING_DATASOURCE_USERNAME="$MYSQL_USER" \
-              -e SPRING_DATASOURCE_PASSWORD="$MYSQL_ROOT_PASSWORD" \
-              -e SPRING_REDIS_HOST=redis-container \
-              myapp:latest
-
+networks:
+  my-network:
+    driver: bridge
