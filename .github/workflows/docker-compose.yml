@@ -48,7 +48,9 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           script: |
             cd ~/app
-
+            echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD"
+            echo "MYSQL_USER=$MYSQL_USER"
+            echo "MYSQL_DATABASE=$MYSQL_DATABASE"
             docker network create my-network || true 
 
             # 1. 기존 컨테이너 종료 및 삭제 (myapp, redis, es, mysql)
