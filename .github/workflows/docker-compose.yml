@@ -28,10 +28,6 @@ jobs:
           source:
             Dockerfile
             target/pawnder-0.0.1-SNAPSHOT.jar
-            add_unique_constraint.sql
-            cleanup_duplicate_likes.sql
-            src/
-            pom.xml
           target: "~/app"
 
       - name: SSH into EC2 and build & run Docker containers
