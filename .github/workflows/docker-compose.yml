@@ -34,9 +34,9 @@ jobs:
           host: ${{ env.EC2_HOST }}
           username: ubuntu
           key: ${{ env.EC2_SSH_KEY }}
-          source: |
-            Dockerfile
-            target/pawnder-0.0.1-SNAPSHOT.jar
+          source:
+            "Dockerfile"
+            "target/*.jar"
           target: "~/app"
 
       - name: SSH into EC2 and build & run Docker containers
