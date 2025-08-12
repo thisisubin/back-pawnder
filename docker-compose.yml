@@ -56,7 +56,6 @@ services:
       - mysql-data:/var/lib/mysql
     networks:
       - my-network
-      -
 volumes:
   redis-data:
   es-data:
