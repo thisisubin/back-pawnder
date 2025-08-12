@@ -34,5 +34,10 @@ jobs:
           debug: true
           script: |
             cd ~/app
+            sudo docker rm -f mysql-container redis-container elasticsearch-container
             sudo docker-compose down || true
             sudo docker-compose up --build -d
+          envs: |
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+            MYSQL_USER=${{ secrets.MYSQL_USER }}
