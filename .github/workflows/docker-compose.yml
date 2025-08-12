@@ -48,6 +48,8 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           script: |
             cd ~/app
+            
+            docker network create my-network || true
 
             docker build -t myapp:latest . || (echo "Docker build failed!" && exit 1)
 
