@@ -48,7 +48,6 @@ jobs:
       # --- 이 부분이 새롭게 추가되었습니다. ---
       - name: Create SSH key file on runner
         run: |
-            mkdir -p ~/.ssh
             echo "${{ secrets.EC2_SSH_KEY }}" > /home/ubuntu/.ssh/authorized_keys
             chmod 600 /home/ubuntu/.ssh/authorized_keys
 
