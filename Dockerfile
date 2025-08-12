@@ -3,7 +3,7 @@ FROM eclipse-temurin:21-jdk
 
 
 # JAR 파일을 컨테이너 내 /app 폴더에 복사
-COPY target/pawnder-0.0.1-SNAPSHOT.jar /app/pawnder-0.0.1-SNAPSHOT.jar
+COPY pawnder-0.0.1-SNAPSHOT.jar /app/pawnder-0.0.1-SNAPSHOT.jar
 
 # 컨테이너 내 작업 디렉터리 설정
 WORKDIR /app
