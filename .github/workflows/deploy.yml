@@ -43,7 +43,7 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           # Upload the JAR file, Dockerfile, and deploy.yml
           source: "${{ env.JAR_FILE }},Dockerfile,deploy.yml"
-          target: "~/app"\
+          target: "~/app"
 
       - name: SSH into EC2 and build & run Docker containers
         uses: appleboy/ssh-action@master
