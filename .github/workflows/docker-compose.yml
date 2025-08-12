@@ -37,9 +37,7 @@ jobs:
           host: ${{ env.EC2_HOST }}
           username: ubuntu
           key: ${{ env.EC2_SSH_KEY }}
-          source: |
-            Dockerfile
-            target/***-0.0.1-SNAPSHOT.jar
+          source: "target/***-0.0.1-SNAPSHOT.jar"
           target: "~/app"
 
       - name: SSH into EC2 and build & run Docker containers
