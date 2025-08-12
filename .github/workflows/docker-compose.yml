@@ -55,17 +55,17 @@ jobs:
             docker rm myapp redis-container elasticsearch-container || true
 
             docker volume create redis-data || true
-            docker run -d --name redis-container -p 6379:6379 -v redis-data:/data redis:7.0
+            docker run -d --name redis-container --network my-network -p 6379:6379 -v redis-data:/data redis:7.0
 
             docker volume create es-data || true
-            docker run -d --name elasticsearch-container -p 9200:9200 -p 9300:9300 \
+            docker run -d --name elasticsearch-container --network my-network -p 9200:9200 -p 9300:9300 \
               -e "discovery.type=single-node" \
               -e "xpack.security.enabled=false" \
               -v es-data:/usr/share/elasticsearch/data \
               docker.elastic.co/elasticsearch/elasticsearch:8.9.0
 
             docker volume create mysql-data || true
-            docker run -d --name mysql-container -p 3306:3306 \
+            docker run -d --name mysql-container --network my-network -p 3306:3306 \
               -e MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} \
               -e MYSQL_DATABASE=${MYSQL_DATABASE} \
               -e MYSQL_USER=${MYSQL_USER} \
