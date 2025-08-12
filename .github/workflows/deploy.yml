@@ -48,15 +48,15 @@ jobs:
       # --- 이 부분이 새롭게 추가되었습니다. ---
       - name: Create SSH key file on runner
         run: |
-            echo "${{ secrets.EC2_SSH_KEY }}" > /home/ubuntu/.ssh/authorized_keys
-            chmod 600 /home/ubuntu/.ssh/authorized_keys
+            echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
 
       - name: SSH into EC2 and build & run Docker containers
         uses: appleboy/ssh-action@master
         with:
             host: ${{ env.EC2_HOST }}
             username: ubuntu
-            key: /home/ubuntu/.ssh/authorized_keys
+            key: ~/.ssh/id_rsa
             script: |
               cd ~/app
               
