@@ -1,5 +1,6 @@
 # OpenJDK 22 이미지 기반
-FROM eclipse-temurin:22-jdk-jammy
+FROM eclipse-temurin:21-jdk
+
 
 # JAR 파일을 컨테이너 내 /app 폴더에 복사
 COPY target/pawnder-0.0.1-SNAPSHOT.jar /app/pawnder-0.0.1-SNAPSHOT.jar
